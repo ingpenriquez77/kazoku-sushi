@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\CompraInsumo;
+use App\Models\Insumo;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class ComprasInsumosTableSeeder extends Seeder
 {
@@ -12,45 +13,49 @@ class ComprasInsumosTableSeeder extends Seeder
      */
     public function run(): void
     {
+        // Mapeamos las compras vinculadas directamente al nombre del insumo
         $compras = [
-            ['insumo_id' => 1, 'cantidad' => 4000.00, 'costo_total' => 100.00],
-            ['insumo_id' => 2, 'cantidad' => 1000.00, 'costo_total' => 45.00],
-            ['insumo_id' => 3, 'cantidad' => 100.00, 'costo_total' => 125.00],
-            ['insumo_id' => 4, 'cantidad' => 1000.00, 'costo_total' => 70.00],
-            ['insumo_id' => 5, 'cantidad' => 1000.00, 'costo_total' => 35.00],
-            ['insumo_id' => 6, 'cantidad' => 1000.00, 'costo_total' => 160.00],
-            ['insumo_id' => 7, 'cantidad' => 1000.00, 'costo_total' => 170.00],
-            ['insumo_id' => 8, 'cantidad' => 1000.00, 'costo_total' => 50.00],
-            ['insumo_id' => 9, 'cantidad' => 1000.00, 'costo_total' => 21.00],
-            ['insumo_id' => 10, 'cantidad' => 1000.00, 'costo_total' => 23.00],
-            ['insumo_id' => 11, 'cantidad' => 1000.00, 'costo_total' => 175.00],
-            ['insumo_id' => 12, 'cantidad' => 50.00, 'costo_total' => 120.00],
-            ['insumo_id' => 13, 'cantidad' => 1000.00, 'costo_total' => 160.00],
-            ['insumo_id' => 14, 'cantidad' => 20.00, 'costo_total' => 60.00],
-            ['insumo_id' => 15, 'cantidad' => 3800.00, 'costo_total' => 175.00],
-            ['insumo_id' => 16, 'cantidad' => 1000.00, 'costo_total' => 60.00],
-            ['insumo_id' => 17, 'cantidad' => 1000.00, 'costo_total' => 150.00],
-            ['insumo_id' => 18, 'cantidad' => 1000.00, 'costo_total' => 60.00],
-            ['insumo_id' => 19, 'cantidad' => 100.00, 'costo_total' => 54.00],
-            ['insumo_id' => 20, 'cantidad' => 100.00, 'costo_total' => 90.00],
-            ['insumo_id' => 21, 'cantidad' => 750.00, 'costo_total' => 90.00],
-            ['insumo_id' => 22, 'cantidad' => 3500.00, 'costo_total' => 55.00],
-            ['insumo_id' => 23, 'cantidad' => 1000.00, 'costo_total' => 80.00],
-            ['insumo_id' => 24, 'cantidad' => 1000.00, 'costo_total' => 20.00],
-            ['insumo_id' => 25, 'cantidad' => 25.00, 'costo_total' => 11.00],
-            ['insumo_id' => 26, 'cantidad' => 1000.00, 'costo_total' => 100.00],
-            ['insumo_id' => 27, 'cantidad' => 1000.00, 'costo_total' => 14.00],
+            ['insumo_nombre' => 'Arroz Sushimix', 'cantidad' => 4000.00, 'costo_total' => 100.00],
+            ['insumo_nombre' => 'Alga Nori', 'cantidad' => 1000.00, 'costo_total' => 45.00],
+            ['insumo_nombre' => 'Queso Crema', 'cantidad' => 100.00, 'costo_total' => 125.00],
+            ['insumo_nombre' => 'Aguacate', 'cantidad' => 1000.00, 'costo_total' => 70.00],
+            ['insumo_nombre' => 'Pepino', 'cantidad' => 1000.00, 'costo_total' => 35.00],
+            ['insumo_nombre' => 'Salmón Fresh', 'cantidad' => 1000.00, 'costo_total' => 160.00],
+            ['insumo_nombre' => 'Atún Fresco', 'cantidad' => 1000.00, 'costo_total' => 170.00],
+            ['insumo_nombre' => 'Surimi', 'cantidad' => 1000.00, 'costo_total' => 50.00],
+            ['insumo_nombre' => 'Ajonjolí Blanco', 'cantidad' => 1000.00, 'costo_total' => 21.00],
+            ['insumo_nombre' => 'Ajonjolí Negro', 'cantidad' => 1000.00, 'costo_total' => 23.00],
+            ['insumo_nombre' => 'Camarón', 'cantidad' => 1000.00, 'costo_total' => 175.00],
+            ['insumo_nombre' => 'Salsa de Soya', 'cantidad' => 50.00, 'costo_total' => 120.00],
+            ['insumo_nombre' => 'Panko', 'cantidad' => 1000.00, 'costo_total' => 160.00],
+            ['insumo_nombre' => 'Harina Tempura', 'cantidad' => 20.00, 'costo_total' => 60.00],
+            ['insumo_nombre' => 'Salsa Eel / Anguila', 'cantidad' => 3800.00, 'costo_total' => 175.00],
+            ['insumo_nombre' => 'Chipotle', 'cantidad' => 1000.00, 'costo_total' => 60.00],
+            ['insumo_nombre' => 'Salsa Tampico', 'cantidad' => 1000.00, 'costo_total' => 150.00],
+            ['insumo_nombre' => 'Chiles Serranos', 'cantidad' => 1000.00, 'costo_total' => 60.00],
+            ['insumo_nombre' => 'Mayonesa', 'cantidad' => 100.00, 'costo_total' => 54.00],
+            ['insumo_nombre' => 'Sriracha', 'cantidad' => 100.00, 'costo_total' => 90.00],
+            ['insumo_nombre' => 'Zanahoria', 'cantidad' => 750.00, 'costo_total' => 90.00],
+            ['insumo_nombre' => 'Calabaza', 'cantidad' => 3500.00, 'costo_total' => 55.00],
+            ['insumo_nombre' => 'Pollo Empanizado', 'cantidad' => 1000.00, 'costo_total' => 80.00],
+            ['insumo_nombre' => 'Carne de Res', 'cantidad' => 1000.00, 'costo_total' => 20.00],
+            ['insumo_nombre' => 'Té Helado', 'cantidad' => 25.00, 'costo_total' => 11.00],
+            ['insumo_nombre' => 'Refresco 600ml', 'cantidad' => 1000.00, 'costo_total' => 100.00],
+            ['insumo_nombre' => 'Agua Ciel', 'cantidad' => 1000.00, 'costo_total' => 14.00],
         ];
 
-        foreach ($compras as $compra) {
-            DB::table('compras_insumos')->insert([
-                'insumo_id'    => $compra['insumo_id'],
-                'cantidad'     => $compra['cantidad'],
-                'costo_total'  => $compra['costo_total'],
-                'fecha_compra' => now()->toDateString(),
-                'created_at'   => now(),
-                'updated_at'   => now(),
-            ]);
+        foreach ($compras as $compraData) {
+            // Buscamos el insumo por su nombre único para obtener su ObjectId real
+            $insumo = Insumo::where('nombre', $compraData['insumo_nombre'])->first();
+
+            if ($insumo) {
+                CompraInsumo::create([
+                    'insumo_id'    => $insumo->id, // ObjectId dinámico de Mongo
+                    'cantidad'     => $compraData['cantidad'],
+                    'costo_total'  => $compraData['costo_total'],
+                    'fecha_compra' => now()->toDateString(),
+                ]);
+            }
         }
     }
 }

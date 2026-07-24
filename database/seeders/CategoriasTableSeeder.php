@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Categoria;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class CategoriasTableSeeder extends Seeder
 {
@@ -13,25 +13,22 @@ class CategoriasTableSeeder extends Seeder
     public function run(): void
     {
         $categorias = [
-            ['id' => 1, 'nombre' => 'Entradas', 'descripcion' => 'Platillos de entrada e entremeses'],
-            ['id' => 2, 'nombre' => 'Naturales', 'descripcion' => 'Sushis y rollos naturales'],
-            ['id' => 3, 'nombre' => 'Empanizados', 'descripcion' => 'Rollos empanizados y fritos'],
-            ['id' => 4, 'nombre' => 'Especialidades', 'descripcion' => 'Especialidades de la casa'],
-            ['id' => 5, 'nombre' => 'Arroces', 'descripcion' => 'Gohan y platillos a base de arroz'],
-            ['id' => 6, 'nombre' => 'Promociones', 'descripcion' => 'Promociones especiales'],
-            ['id' => 7, 'nombre' => 'Charolas', 'descripcion' => 'Charolas de sushi para compartir'],
-            ['id' => 8, 'nombre' => 'Bebidas', 'descripcion' => 'Bebidas y refrescos'],
-            ['id' => 9, 'nombre' => 'Extras', 'descripcion' => 'Ingredientes y aderezos extra'],
+            ['nombre' => 'Entradas', 'descripcion' => 'Platillos de entrada e entremeses'],
+            ['nombre' => 'Naturales', 'descripcion' => 'Sushis y rollos naturales'],
+            ['nombre' => 'Empanizados', 'descripcion' => 'Rollos empanizados y fritos'],
+            ['nombre' => 'Especialidades', 'descripcion' => 'Especialidades de la casa'],
+            ['nombre' => 'Arroces', 'descripcion' => 'Gohan y platillos a base de arroz'],
+            ['nombre' => 'Promociones', 'descripcion' => 'Promociones especiales'],
+            ['nombre' => 'Charolas', 'descripcion' => 'Charolas de sushi para compartir'],
+            ['nombre' => 'Bebidas', 'descripcion' => 'Bebidas y refrescos'],
+            ['nombre' => 'Extras', 'descripcion' => 'Ingredientes y aderezos extra'],
         ];
 
         foreach ($categorias as $cat) {
-            DB::table('categorias')->updateOrInsert(
-                ['id' => $cat['id']],
+            Categoria::updateOrCreate(
+                ['nombre' => $cat['nombre']], // Busca por nombre único
                 [
-                    'nombre'      => $cat['nombre'],
                     'descripcion' => $cat['descripcion'],
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
                 ]
             );
         }

@@ -2,10 +2,24 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Producto extends Model
 {
-    // Al usar SQL Directo, no necesitamos definir $fillable o $guarded
-    protected $table = 'productos';
+    protected $connection = 'mongodb';
+    protected $collection = 'productos';
+
+    protected $fillable = [
+        'nombre',
+        'descripcion',
+        'precio',
+        'categoria_id',
+        'imagen',
+        'disponible',
+    ];
+
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class);
+    }
 }

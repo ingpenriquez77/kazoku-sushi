@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Insumo;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class InsumosTableSeeder extends Seeder
 {
@@ -43,12 +43,14 @@ class InsumosTableSeeder extends Seeder
         ];
 
         foreach ($insumos as $insumo) {
-            DB::table('insumos')->updateOrInsert(
-                ['nombre' => $insumo['nombre']],
-                array_merge($insumo, [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ])
+            Insumo::updateOrCreate(
+                ['nombre' => $insumo['nombre']], // Busca por nombre único
+                [
+                    'unidad_medida'         => $insumo['unidad_medida'],
+                    'stock_actual'          => $insumo['stock_actual'],
+                    'stock_minimo'          => $insumo['stock_minimo'],
+                    'precio_costo_unitario' => $insumo['precio_costo_unitario'],
+                ]
             );
         }
     }

@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DatoNegocio;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DatosNegocioController extends Controller
 {
     public function index()
     {
-        // Obtenemos el primer registro o un objeto vacío si no existe
-        $datos = DB::table('datos_negocio')->first();
+        $datos = DatoNegocio::first();
         return view('configuracion.fiscal', compact('datos'));
     }
 
@@ -18,7 +17,7 @@ class DatosNegocioController extends Controller
     {
         $request->validate([
             'nombre_comercial' => 'required|max:150',
-            'moneda' => 'required|max:5',
+            'moneda'           => 'required|max:5',
         ]);
 
         $data = [
@@ -29,34 +28,33 @@ class DatosNegocioController extends Controller
             'direccion'        => $request->direccion,
             'moneda'           => $request->moneda,
             'mensaje_ticket'   => $request->mensaje_ticket,
-            'updated_at'       => now(),
         ];
 
-        $existe = DB::table('datos_negocio')->first();
+        // updateOrCreate busca un registro existente; si no hay ninguno, lo crea
+        $datos = DatoNegocio::first();
 
-        if ($existe) {
-            DB::table('datos_negocio')->where('id', $existe->id)->update($data);
+        if ($datos) {
+            $datos->update($data);
+            $mensaje = 'Configuración actualizada correctamente.';
         } else {
-            $data['created_at'] = now();
-            DB::table('datos_negocio')->insert($data);
-            
-            return redirect()->back()->with('success', 'Configuración guardada correctamente.');
+            DatoNegocio::create($data);
+            $mensaje = 'Configuración guardada correctamente.';
         }
 
-        return redirect()->back()->with('success', 'Configuración actualizada correctamente.');
+        return redirect()->back()->with('success', $mensaje);
     }
 
     public function getFiscalApi()
     {
-        $datos = DB::table('datos_negocio')->first();
-        
+        $datos = DatoNegocio::first();
+
         if (!$datos) {
             return response()->json([
                 'nombre_comercial' => 'KAZOKU SUSHI',
-                'mensaje_ticket' => '¡Gracias por su compra!'
+                'mensaje_ticket'   => '¡Gracias por su compra!'
             ]);
         }
-        
+
         return response()->json($datos);
     }
 }

@@ -4,21 +4,22 @@ namespace App\Models;
 
 use MongoDB\Laravel\Eloquent\Model;
 
-class Receta extends Model
+class DetalleVenta extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'recetas';
+    protected $collection = 'detalle_ventas';
 
     protected $fillable = [
+        'venta_id',
         'producto_id',
-        'insumo_id',
         'cantidad',
-        'cantidad_usada',
+        'precio_unitario',
+        'subtotal',
     ];
 
-    public function insumo()
+    public function venta()
     {
-        return $this->belongsTo(Insumo::class);
+        return $this->belongsTo(Venta::class);
     }
 
     public function producto()

@@ -14,13 +14,14 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         User::updateOrCreate(
-            ['username' => 'admin'], // Busca por este campo para no duplicar si se ejecuta varias veces
+            ['username' => 'admin'], // Busca por este campo para no duplicar en Mongo
             [
                 'name'              => 'Administrador',
                 'email'             => 'admin@kazoku.com',
                 'email_verified_at' => now(),
-                'password'          => Hash::make('010704'), // Cambia la contraseña por la que gustes
+                'password'          => Hash::make('010704'),
                 'role'              => 'Administrador',
+                'avatar'            => 'img/kazoku.png', // Añadido para mantener consistencia con el UserController
             ]
         );
     }

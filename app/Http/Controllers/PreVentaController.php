@@ -2,35 +2,44 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Venta;
+use App\Models\DetalleVenta;
+use App\Models\Producto;
+use App\Models\Receta;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class PreVentaController extends Controller
 {
     public function index()
     {
-        // 1. Obtener ventas pendientes
-        // CAMBIO CLAVE: TO_CHAR (Postgres) -> DATE_FORMAT (MySQL)
-        $ventas_pendientes = DB::select("
-            SELECT v.*, u.name as mesero, 
-            DATE_FORMAT(v.created_at, '%H:%i') as hora 
-            FROM ventas v 
-            JOIN users u ON v.user_id = u.id 
-            WHERE v.estado = 'pendiente'
-            ORDER BY v.created_at DESC
-        ");
-        
-        // 2. Traer detalles (MySQL maneja mejor los IN con subconsultas si las tablas tienen índices)
-        $detalles_totales = DB::select("
-            SELECT dv.venta_id, dv.cantidad, p.nombre, dv.comentario, dv.precio_unitario as precio
-            FROM detalle_ventas dv 
-            JOIN productos p ON dv.producto_id = p.id 
-            WHERE dv.venta_id IN (SELECT id FROM ventas WHERE estado = 'pendiente')
-            AND dv.estado_item != 'cancelado'
-        ");
+        // 1. Ventas pendientes con la relación del usuario (mesero)
+        $ventas_pendientes = Venta::with('user')
+            ->where('estado', 'pendiente')
+            ->latest()
+            ->get()
+            ->map(function ($venta) {
+                // Formateamos la hora desde Carbon/Mongo UTC
+                $venta->mesero = $venta->user->name ?? 'N/A';
+                $venta->hora = $venta->created_at ? $venta->created_at->format('H:i') : '';
+                return $venta;
+            });
 
-        $productos = DB::select("SELECT id, nombre, precio, categoria_id FROM productos ORDER BY nombre ASC");
+        // 2. Traer los IDs de ventas pendientes
+        $ventas_ids = $ventas_pendientes->pluck('_id');
+
+        // 3. Obtener detalles de productos pendientes
+        $detalles_totales = DetalleVenta::with('producto')
+            ->whereIn('venta_id', $ventas_ids)
+            ->where('estado_item', '!=', 'cancelado')
+            ->get()
+            ->map(function ($detalle) {
+                $detalle->nombre = $detalle->producto->nombre ?? 'Producto';
+                $detalle->precio = $detalle->precio_unitario;
+                return $detalle;
+            });
+
+        $productos = Producto::orderBy('nombre', 'asc')->get();
 
         return view('preventa.index', compact('ventas_pendientes', 'productos', 'detalles_totales'));
     }
@@ -38,16 +47,17 @@ class PreVentaController extends Controller
     public function getInsumos($id)
     {
         try {
-            // El Query Builder de Laravel ya es agnóstico, funciona igual en MySQL
-            $insumos = DB::table('recetas')
-                ->join('insumos', 'recetas.insumo_id', '=', 'insumos.id')
-                ->where('recetas.producto_id', $id)
-                ->select('insumos.id', 'insumos.nombre')
-                ->get();
+            $recetas = Receta::with('insumo')->where('producto_id', $id)->get();
 
-            $extras = DB::table('productos')
-                ->where('categoria_id', 9)
-                ->select('id', 'nombre', 'precio')
+            $insumos = $recetas->map(function ($r) {
+                return [
+                    'id'     => $r->insumo->_id ?? $r->insumo_id,
+                    'nombre' => $r->insumo->nombre ?? 'Sin nombre',
+                ];
+            });
+
+            $extras = Producto::where('categoria_id', 9)
+                ->select('_id as id', 'nombre', 'precio')
                 ->get();
 
             return response()->json(['insumos' => $insumos, 'extras' => $extras]);
@@ -59,19 +69,15 @@ class PreVentaController extends Controller
     public function store(Request $request)
     {
         $request->validate(['mesa' => 'required|max:50']);
-        
-        // Generación de código única
+
         $codigo = 'PED-' . strtoupper(substr(uniqid(), -8));
 
-        // insertGetId funciona perfectamente en MySQL con columnas AUTO_INCREMENT
-        DB::table('ventas')->insert([
+        Venta::create([
             'codigo_pedidido' => $codigo,
-            'mesa' => $request->mesa,
-            'estado' => 'pendiente',
-            'total' => 0,
-            'user_id' => Auth::id(),
-            'created_at' => now(),
-            'updated_at' => now()
+            'mesa'            => $request->mesa,
+            'estado'          => 'pendiente',
+            'total'           => 0,
+            'user_id'         => Auth::id(),
         ]);
 
         return redirect()->back()->with('success', 'Mesa abierta.');
@@ -82,44 +88,36 @@ class PreVentaController extends Controller
         $venta_id = $request->venta_id;
         $productos_ids = $request->productos;
         $cantidades = $request->cantidades;
-        $comentarios = $request->comentarios ?? []; 
-        $precios_con_extras = $request->precios; 
+        $comentarios = $request->comentarios ?? [];
+        $precios_con_extras = $request->precios;
 
         if (!$productos_ids) return back()->with('error', 'No hay productos.');
 
         try {
-            // MySQL requiere transacciones para asegurar consistencia en tablas relacionadas
-            DB::transaction(function() use ($venta_id, $productos_ids, $cantidades, $comentarios, $precios_con_extras) {
-                
-                $venta = DB::table('ventas')->where('id', $venta_id)->first();
-                if (!$venta) throw new \Exception("Venta no encontrada.");
+            $venta = Venta::findOrFail($venta_id);
 
-                foreach ($productos_ids as $i => $producto_id) {
-                    $precio_final = $precios_con_extras[$i];
-                    $subtotal = $precio_final * $cantidades[$i];
-                    
-                    DB::table('detalle_ventas')->insert([
-                        'venta_id' => $venta_id,
-                        'codigo_pedidido' => $venta->codigo_pedidido,
-                        'producto_id' => $producto_id,
-                        'cantidad' => $cantidades[$i],
-                        'precio_unitario' => $precio_final,
-                        'subtotal' => $subtotal,
-                        'comentario' => $comentarios[$i] ?? null,
-                        'estado_item' => 'pendiente',
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ]);
-                }
+            foreach ($productos_ids as $i => $producto_id) {
+                $precio_final = $precios_con_extras[$i];
+                $subtotal = $precio_final * $cantidades[$i];
 
-                // En MySQL el SUM() sobre un decimal es muy preciso.
-                $nuevo_total = DB::table('detalle_ventas')
-                                ->where('venta_id', $venta_id)
-                                ->where('estado_item', '!=', 'cancelado')
-                                ->sum('subtotal');
-                                
-                DB::table('ventas')->where('id', $venta_id)->update(['total' => $nuevo_total]);
-            });
+                DetalleVenta::create([
+                    'venta_id'        => $venta->_id,
+                    'codigo_pedidido' => $venta->codigo_pedidido,
+                    'producto_id'     => $producto_id,
+                    'cantidad'        => $cantidades[$i],
+                    'precio_unitario' => $precio_final,
+                    'subtotal'        => $subtotal,
+                    'comentario'      => $comentarios[$i] ?? null,
+                    'estado_item'     => 'pendiente',
+                ]);
+            }
+
+            // Recalculamos el total de la venta
+            $nuevo_total = DetalleVenta::where('venta_id', $venta->_id)
+                ->where('estado_item', '!=', 'cancelado')
+                ->sum('subtotal');
+
+            $venta->update(['total' => $nuevo_total]);
 
             return redirect()->back()->with('success', 'Pedido enviado a cocina.');
         } catch (\Exception $e) {
@@ -130,11 +128,9 @@ class PreVentaController extends Controller
     public function destroy($id)
     {
         try {
-            DB::transaction(function() use ($id) {
-                // MySQL no tiene problemas con updates masivos dentro de transacciones
-                DB::table('detalle_ventas')->where('venta_id', $id)->update(['estado_item' => 'cancelado']);
-                DB::table('ventas')->where('id', $id)->update(['estado' => 'cancelado']);
-            });
+            DetalleVenta::where('venta_id', $id)->update(['estado_item' => 'cancelado']);
+            Venta::where('_id', $id)->update(['estado' => 'cancelado']);
+
             return redirect()->back()->with('success', 'Mesa cancelada.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error al cancelar.');
@@ -144,9 +140,9 @@ class PreVentaController extends Controller
     public function finalizarCobro(Request $request)
     {
         $request->validate([
-            'venta_id' => 'required',
+            'venta_id'    => 'required',
             'metodo_pago' => 'required',
-            'pago_con' => 'required|numeric',
+            'pago_con'    => 'required|numeric',
             'total_pagar' => 'required|numeric',
         ]);
 
@@ -156,26 +152,17 @@ class PreVentaController extends Controller
             $totalVenta = floatval($request->total_pagar);
             $cambio = $montoRecibido - $totalVenta;
 
-            DB::transaction(function() use ($venta_id, $request, $montoRecibido, $cambio) {
-                
-                // 1. Actualizamos ventas
-                DB::table('ventas')->where('id', $venta_id)->update([
-                    'estado' => 'pagado',
-                    'metodo_pago' => $request->metodo_pago,
-                    'monto_pagado' => $montoRecibido,
-                    'cambio' => $cambio,
-                    'updated_at' => now()
-                ]);
+            $venta = Venta::findOrFail($venta_id);
+            $venta->update([
+                'estado'      => 'pagado',
+                'metodo_pago' => $request->metodo_pago,
+                'monto_pagado'=> $montoRecibido,
+                'cambio'      => $cambio,
+            ]);
 
-                // 2. Actualizamos detalle_ventas
-                DB::table('detalle_ventas')
-                    ->where('venta_id', $venta_id)
-                    ->where('estado_item', '!=', 'cancelado')
-                    ->update([
-                        'estado_item' => 'pagado',
-                        'updated_at' => now()
-                    ]);
-            });
+            DetalleVenta::where('venta_id', $venta->_id)
+                ->where('estado_item', '!=', 'cancelado')
+                ->update(['estado_item' => 'pagado']);
 
             return redirect()->route('preventa.index')->with('success', 'Venta finalizada y mesa liberada.');
 

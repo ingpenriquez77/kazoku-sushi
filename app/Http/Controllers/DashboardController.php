@@ -2,51 +2,62 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Venta;
+use App\Models\DetalleVenta;
+use App\Models\Producto;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // En PostgreSQL los meses se extraen de forma distinta
-        $mesActual = date('m');
+        $inicioMes = now()->startOfMonth();
+        $finMes = now()->endOfMonth();
 
-        // 1. Estadísticas (Info Boxes) con SQL compatible con Postgres
+        // 1. Estadísticas (Info Boxes)
+        $ventasMesTotal = Venta::where('estado', 'pagado')
+            ->whereBetween('created_at', [$inicioMes, $finMes])
+            ->sum('total');
+
         $stats = [
-            // Usamos EXTRACT para obtener el mes del timestamp
-            'ventas_mes' => DB::selectOne("
-                SELECT SUM(total) as total 
-                FROM ventas 
-                WHERE estado = 'Pagado' 
-                AND EXTRACT(MONTH FROM created_at) = ?
-            ", [$mesActual])->total ?? 0,
-            
-            'nuevos_pedidos' => DB::selectOne("SELECT COUNT(*) as total FROM ventas WHERE estado = 'pendiente'")->total,
-            
-            'productos_total' => DB::selectOne("SELECT COUNT(*) as total FROM productos")->total,
-            
-            'mesas_activas' => DB::selectOne("SELECT COUNT(DISTINCT mesa) as total FROM ventas WHERE estado = 'pendiente'")->total,
+            'ventas_mes'      => $ventasMesTotal ?? 0,
+            'nuevos_pedidos'  => Venta::where('estado', 'pendiente')->count(),
+            'productos_total' => Producto::count(),
+            'mesas_activas'   => Venta::where('estado', 'pendiente')->distinct('mesa')->count('mesa'),
         ];
 
         // 2. Órdenes Recientes
-        $ultimos_pedidos = DB::select("
-            SELECT v.*, u.name as mesero 
-            FROM ventas v 
-            LEFT JOIN users u ON v.user_id = u.id 
-            ORDER BY v.created_at DESC 
-            LIMIT 7
-        ");
+        $ultimos_pedidos = Venta::with('user')
+            ->latest()
+            ->take(7)
+            ->get()
+            ->map(function ($venta) {
+                $venta->mesero = $venta->user->name ?? 'Sin asignar';
+                return $venta;
+            });
 
         // 3. Productos más vendidos
-        $top_productos = DB::select("
-            SELECT p.nombre, p.precio, SUM(dv.cantidad) as total_vendido 
-            FROM detalle_ventas dv 
-            JOIN productos p ON dv.producto_id = p.id 
-            GROUP BY p.id, p.nombre, p.precio 
-            ORDER BY total_vendido DESC 
-            LIMIT 5
-        ");
+        // Agrupamos el historial de detalles pagados en memoria
+        $detallesPagados = DetalleVenta::with('producto')
+            ->where('estado_item', '!=', 'cancelado')
+            ->get();
+
+        $top_productos = $detallesPagados
+            ->groupBy('producto_id')
+            ->map(function ($items) {
+                $primerDetalle = $items->first();
+                $producto = $primerDetalle->producto;
+
+                return (object)[
+                    'nombre'        => $producto->nombre ?? 'Producto Eliminado',
+                    'precio'        => $producto->precio ?? $primerDetalle->precio_unitario,
+                    'total_vendido' => $items->sum('cantidad'),
+                ];
+            })
+            ->sortByDesc('total_vendido')
+            ->take(5)
+            ->values();
 
         return view('dashboard.index', compact('stats', 'ultimos_pedidos', 'top_productos'));
     }
