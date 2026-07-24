@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\DatosNegocioController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
@@ -12,29 +13,84 @@ use App\Http\Controllers\PreVentaController;
 use App\Http\Controllers\CorteZController;
 use App\Http\Controllers\Auth\LoginController;
 
-// Esta es la ruta que Laravel busca por defecto cuando la sesión expira
-Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
+// ==============================================================================
+// RUTA DE HEALTHCHECK (Pública)
+// ==============================================================================
+Route::get('/health', function () {
+    try {
+        $dbConnection = config('database.default');
 
-// Le asignamos el nombre 'login.store' para evitar el error Symfony que mencionaste
+        // Obtener versión y hora según el driver de base de datos
+        if ($dbConnection === 'mysql') {
+            $dbVersion = DB::selectOne("SELECT VERSION() as version")->version;
+            $dbTime = DB::selectOne("SELECT NOW() as time")->time;
+        } else {
+            // En caso de usar MongoDB
+            $dbVersion = 'MongoDB Atlas / Driver Native';
+            $dbTime = now()->toDateTimeString();
+        }
+
+        $dbName = config("database.connections.{$dbConnection}.database");
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'API is running properly',
+            'app_info' => [
+                'name' => config('app.name'),
+                'laravel_version' => app()->version(),
+                'php_version' => PHP_VERSION,
+                'server_time' => now()->toDateTimeString(),
+                'timezone' => config('app.timezone'),
+            ],
+            'database' => [
+                'connection' => $dbConnection,
+                'name' => $dbName,
+                'version' => $dbVersion,
+                'time' => $dbTime,
+            ]
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Database connection failed: ' . $e->getMessage(),
+            'app_info' => [
+                'name' => config('app.name'),
+                'laravel_version' => app()->version(),
+                'php_version' => PHP_VERSION,
+                'server_time' => now()->toDateTimeString(),
+            ]
+        ], 500);
+    }
+});
+
+// ==============================================================================
+// AUTENTICACIÓN
+// ==============================================================================
+Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.store');
 
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+// Redirige a raíz '/' al cerrar sesión mediante este callback limpio
+Route::post('/logout', function (Request $request) {
+    app(LoginController::class)->logout(request());
+    return redirect('/');
+})->name('logout');
 
+
+// ==============================================================================
+// RUTAS PROTEGIDAS POR AUTENTICACIÓN
+// ==============================================================================
 Route::middleware(['auth'])->group(function () {
-    
-    // Route::get('/dashboard', function () {
-    //     return view('layouts.admin');
-    // })->name('dashboard');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-    // --- Rutas para Configuracion ---
+    // --- Rutas para Configuración ---
     Route::prefix('configuracion')->group(function () {
         Route::get('/fiscal', [DatosNegocioController::class, 'index'])->name('datos_negocio.index');
         Route::post('/fiscal', [DatosNegocioController::class, 'store'])->name('datos_negocio.store');
         Route::get('/fiscal-api', [DatosNegocioController::class, 'getFiscalApi']);
     });
-    
+
     // --- Rutas para Usuarios ---
     Route::prefix('usuarios')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('usuarios.index');
@@ -81,7 +137,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/insumos/{id}', [PreVentaController::class, 'getInsumos']);
         Route::post('/abrir', [PreVentaController::class, 'store'])->name('preventa.store');
         Route::post('/agregar', [PreVentaController::class, 'agregarProducto'])->name('preventa.agregar');
-        Route::delete('/{id}', [PreVentaController::class, 'destroy'])->name('preventa.destroy');   
+        Route::delete('/{id}', [PreVentaController::class, 'destroy'])->name('preventa.destroy');
         Route::post('/finalizar', [PreVentaController::class, 'finalizarCobro'])->name('preventa.finalizar');
     });
 
