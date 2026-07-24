@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Empleados')
-@section('header', 'Gestión de Empleados')
+@section('header', 'Gestión de Empleados y Permisos')
 
 @section('content')
 
@@ -27,6 +27,7 @@
                         <th>Usuario</th>
                         <th>Correo</th>
                         <th>Rol</th>
+                        <th>Permisos Asignados</th>
                         <th class="text-center" style="width: 220px">Acciones</th>
                     </tr>
                 </thead>
@@ -36,8 +37,8 @@
                         <td class="px-3 align-middle text-muted">#{{ $user->id }}</td>
                         <td class="align-middle">
                             @php
-                                $imgTablar = (strpos($user->avatar, 'avatars/') === 0) 
-                                             ? asset('storage/' . $user->avatar) 
+                                $imgTablar = (strpos($user->avatar, 'avatars/') === 0)
+                                             ? asset('storage/' . $user->avatar)
                                              : asset('img/kazoku.png');
                             @endphp
                             <img src="{{ $imgTablar }}" class="img-circle shadow-sm" style="width: 35px; height: 35px; object-fit: cover; border: 1px solid #ddd;">
@@ -48,6 +49,17 @@
                         <td class="align-middle">
                             <span class="badge badge-info shadow-sm" style="font-weight: 500;">{{ $user->role }}</span>
                         </td>
+                        <td class="align-middle">
+                            @if($user->role === 'Administrador')
+                                <span class="badge badge-success">Acceso Total</span>
+                            @else
+                                @forelse($user->permissions as $p)
+                                    <span class="badge badge-light border text-capitalize mb-1">{{ $p }}</span>
+                                @empty
+                                    <span class="text-muted small">Sin permisos</span>
+                                @endforelse
+                            @endif
+                        </td>
                         <td class="text-center align-middle">
                             @if(auth()->user()->role === 'Administrador')
                                 <div class="btn-group">
@@ -56,9 +68,9 @@
                                         <i class="fas fa-eye"></i>
                                     </button>
 
-                                    {{-- EDITAR ROL --}}
-                                    <button type="button" class="btn btn-link text-info p-1" data-toggle="modal" data-target="#modal-edit-{{ $user->id }}" title="Editar Rol">
-                                        <i class="fas fa-user-tag"></i>
+                                    {{-- EDITAR ROL Y PERMISOS --}}
+                                    <button type="button" class="btn btn-link text-info p-1" data-toggle="modal" data-target="#modal-edit-{{ $user->id }}" title="Editar Permisos">
+                                        <i class="fas fa-user-shield"></i>
                                     </button>
 
                                     {{-- CAMBIAR CONTRASEÑA --}}
@@ -79,22 +91,74 @@
                         </td>
                     </tr>
 
-                    {{-- MODAL TARJETÓN DE EMPLEADO (CREDENCIAL) --}}
+                    {{-- MODAL EDITAR ROL Y PERMISOS --}}
+                    <div class="modal fade" id="modal-edit-{{ $user->id }}">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0" style="border-radius: 12px;">
+                                <div class="modal-header bg-info py-2">
+                                    <h6 class="modal-title text-white font-weight-bold">Rol y Permisos: {{ $user->username }}</h6>
+                                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                                </div>
+                                <form action="{{ route('usuarios.update', $user->id) }}" method="POST">
+                                    @csrf @method('PUT')
+                                    <div class="modal-body">
+                                        <div class="form-group mb-3">
+                                            <label class="small font-weight-bold">Rol Principal</label>
+                                            <select name="role" class="form-control form-control-sm" required>
+                                                <option value="Administrador" {{ $user->role == 'Administrador' ? 'selected' : '' }}>Administrador</option>
+                                                <option value="Mesero" {{ $user->role == 'Mesero' ? 'selected' : '' }}>Mesero</option>
+                                                <option value="Cajero" {{ $user->role == 'Cajero' ? 'selected' : '' }}>Cajero</option>
+                                                <option value="Cocina" {{ $user->role == 'Cocina' ? 'selected' : '' }}>Cocina</option>
+                                            </select>
+                                        </div>
+
+                                        <label class="small font-weight-bold d-block mb-2">Permisos Modulares</label>
+                                        <div class="row">
+                                            @php
+                                                $modulos = [
+                                                    'dashboard' => 'Dashboard / Métricas',
+                                                    'configuracion' => 'Configuración / Datos Fiscales',
+                                                    'usuarios' => 'Gestión de Usuarios',
+                                                    'categorias' => 'Categorías',
+                                                    'productos' => 'Productos',
+                                                    'inventario' => 'Inventario e Insumos',
+                                                    'recetas' => 'Recetas',
+                                                    'preventa' => 'PreVentas / Puntos de Venta',
+                                                    'caja' => 'Cortes de Caja (Corte Z)'
+                                                ];
+                                            @endphp
+                                            @foreach($modulos as $key => $label)
+                                                <div class="col-6 mb-2">
+                                                    <div class="custom-control custom-checkbox">
+                                                        <input type="checkbox" name="permissions[]" value="{{ $key }}" class="custom-control-input" id="perm_{{ $user->id }}_{{ $key }}"
+                                                        {{ in_array($key, $user->permissions ?? []) ? 'checked' : '' }}>
+                                                        <label class="custom-control-label small" for="perm_{{ $user->id }}_{{ $key }}">{{ $label }}</label>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 py-2">
+                                        <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Cerrar</button>
+                                        <button type="submit" class="btn btn-info btn-sm px-4">Guardar Permisos</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- MODAL TARJETÓN --}}
                     <div class="modal fade" id="modal-view-{{ $user->id }}">
                         <div class="modal-dialog modal-sm modal-dialog-centered">
                             <div class="modal-content border-0" style="border-radius: 20px; overflow: hidden;">
                                 <div class="modal-body p-0">
                                     <div class="bg-primary text-center py-4">
                                         @php
-                                            $urlImagen = (strpos($user->avatar, 'avatars/') === 0) 
-                                                         ? asset('storage/' . $user->avatar) 
+                                            $urlImagen = (strpos($user->avatar, 'avatars/') === 0)
+                                                         ? asset('storage/' . $user->avatar)
                                                          : asset('img/kazoku.png');
                                         @endphp
-                                        <img src="{{ $urlImagen }}" 
-                                             class="img-circle elevation-2 shadow" 
-                                             style="width: 100px; height: 100px; border: 4px solid #fff; object-fit: cover;"
-                                             alt="User avatar">
-                                        
+                                        <img src="{{ $urlImagen }}" class="img-circle elevation-2 shadow" style="width: 100px; height: 100px; border: 4px solid #fff; object-fit: cover;">
                                         <h5 class="mt-3 text-white font-weight-bold mb-0">{{ $user->name }}</h5>
                                         <span class="badge badge-light text-primary px-3 py-1 mt-2" style="border-radius: 50px; font-size: 0.8rem;">
                                             {{ $user->role }}
@@ -108,50 +172,19 @@
                                         <hr>
                                         <div class="mb-3">
                                             <i class="fas fa-user-circle text-primary mr-1"></i>
-                                            <small class="text-muted d-block">Usuario de Sistema</small>
+                                            <small class="text-muted d-block">Usuario</small>
                                             <span class="font-weight-bold">{{ $user->username }}</span>
                                         </div>
                                         <div>
                                             <i class="fas fa-envelope text-primary mr-1"></i>
-                                            <small class="text-muted d-block">Correo Registrado</small>
+                                            <small class="text-muted d-block">Correo</small>
                                             <span class="font-weight-bold small text-truncate d-block">{{ $user->email }}</span>
                                         </div>
                                     </div>
-                                    <div class="bg-light p-3 text-center border-top d-flex justify-content-between align-items-center">
-                                        <img src="{{ asset('img/kazoku.png') }}" style="height: 25px; opacity: 0.6;" alt="Logo Small">
+                                    <div class="bg-light p-3 text-center border-top">
                                         <button type="button" class="btn btn-secondary btn-xs px-3" data-dismiss="modal" style="border-radius: 50px;">Cerrar</button>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- MODAL EDITAR ROL --}}
-                    <div class="modal fade" id="modal-edit-{{ $user->id }}">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content border-0" style="border-radius: 12px;">
-                                <div class="modal-header bg-info py-2">
-                                    <h6 class="modal-title text-white font-weight-bold">Editar Rol: {{ $user->username }}</h6>
-                                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-                                </div>
-                                <form action="{{ route('usuarios.update', $user->id) }}" method="POST">
-                                    @csrf @method('PUT')
-                                    <div class="modal-body">
-                                        <div class="form-group">
-                                            <label class="small font-weight-bold">Seleccione el nuevo Rol</label>
-                                            <select name="role" class="form-control form-control-sm" required>
-                                                <option value="Administrador" {{ $user->role == 'Administrador' ? 'selected' : '' }}>Administrador</option>
-                                                <option value="Mesero" {{ $user->role == 'Mesero' ? 'selected' : '' }}>Mesero</option>
-                                                <option value="Cajero" {{ $user->role == 'Cajero' ? 'selected' : '' }}>Cajero</option>
-                                                <option value="Cocina" {{ $user->role == 'Cocina' ? 'selected' : '' }}>Cocina</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-0 py-2">
-                                        <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Cerrar</button>
-                                        <button type="submit" class="btn btn-info btn-sm px-4">Guardar Cambios</button>
-                                    </div>
-                                </form>
                             </div>
                         </div>
                     </div>
@@ -169,21 +202,18 @@
                                     <div class="modal-body">
                                         <div class="form-group">
                                             <label class="small font-weight-bold">Nueva Contraseña</label>
-                                            <input type="password" name="password" class="form-control form-control-sm" required minlength="8" placeholder="Mínimo 8 caracteres">
-                                        </div>
-                                        <div class="form-group mb-0">
-                                            <label class="small font-weight-bold">Confirmar Contraseña</label>
-                                            <input type="password" name="password_confirmation" class="form-control form-control-sm" required placeholder="Repita la contraseña">
+                                            <input type="password" name="password" class="form-control form-control-sm" required minlength="8">
                                         </div>
                                     </div>
                                     <div class="modal-footer border-0 py-2">
                                         <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-warning btn-sm px-4 font-weight-bold">Actualizar Contraseña</button>
+                                        <button type="submit" class="btn btn-warning btn-sm px-4 font-weight-bold">Actualizar</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
+
                     @endforeach
                 </tbody>
             </table>
@@ -242,9 +272,22 @@
                         </div>
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-2">
                         <label class="small font-weight-bold">Contraseña Inicial</label>
                         <input type="password" name="password" class="form-control form-control-sm" required minlength="8">
+                    </div>
+
+                    <hr>
+                    <label class="small font-weight-bold d-block mb-2">Asignar Permisos de Acceso</label>
+                    <div class="row">
+                        @foreach($modulos as $key => $label)
+                            <div class="col-6 mb-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="permissions[]" value="{{ $key }}" class="custom-control-input" id="new_perm_{{ $key }}">
+                                    <label class="custom-control-label small" for="new_perm_{{ $key }}">{{ $label }}</label>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
                 <div class="modal-footer border-0 py-2">
@@ -261,12 +304,10 @@
 @push('js')
 <script>
     $(document).ready(function() {
-        // Previsualización de imagen al seleccionar archivo
         $('#avatarFile').on('change', function() {
             let fileName = $(this).val().split('\\').pop();
             $(this).next('.custom-file-label').addClass("selected").html(fileName);
-            
-            // Lógica de Preview
+
             const file = this.files[0];
             if (file) {
                 let reader = new FileReader();

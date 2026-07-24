@@ -11,7 +11,13 @@ class UserController extends Controller
 {
     public function index()
     {
-        $usuarios = DB::select("SELECT id, name, username, email, role, avatar, created_at FROM users ORDER BY id ASC");
+        $usuarios = DB::select("SELECT id, name, username, email, role, avatar, permissions, created_at FROM users ORDER BY id ASC");
+
+        // Decodificamos el JSON de permisos para cada registro
+        foreach ($usuarios as $u) {
+            $u->permissions = json_decode($u->permissions ?? '[]', true);
+        }
+
         return view('usuarios.index', compact('usuarios'));
     }
 
@@ -23,7 +29,8 @@ class UserController extends Controller
             'email' => 'required|unique:users',
             'password' => 'required|min:8',
             'role' => 'required|in:Administrador,Mesero,Cajero,Cocina',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'permissions' => 'nullable|array'
         ]);
 
         $avatarPath = 'img/kazoku.png';
@@ -32,14 +39,17 @@ class UserController extends Controller
             $avatarPath = $request->file('avatar')->store('avatars', 'public');
         }
 
-        DB::insert("INSERT INTO users (name, username, email, password, role, avatar, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())", [
+        $permissionsJson = json_encode($request->permissions ?? []);
+
+        DB::insert("INSERT INTO users (name, username, email, password, role, avatar, permissions, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())", [
             $request->name,
             $request->username,
             $request->email,
             Hash::make($request->password),
             $request->role,
-            $avatarPath
+            $avatarPath,
+            $permissionsJson
         ]);
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario registrado exitosamente.');
@@ -48,15 +58,19 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'role' => 'required|in:Administrador,Mesero,Cajero,Cocina'
+            'role' => 'required|in:Administrador,Mesero,Cajero,Cocina',
+            'permissions' => 'nullable|array'
         ]);
 
-        DB::update("UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?", [
+        $permissionsJson = json_encode($request->permissions ?? []);
+
+        DB::update("UPDATE users SET role = ?, permissions = ?, updated_at = NOW() WHERE id = ?", [
             $request->role,
+            $permissionsJson,
             $id
         ]);
 
-        return redirect()->route('usuarios.index')->with('success', 'Registro actualizado.');
+        return redirect()->route('usuarios.index')->with('success', 'Permisos y rol actualizados.');
     }
 
     public function destroy($id)
@@ -73,7 +87,7 @@ class UserController extends Controller
 
         DB::delete("DELETE FROM users WHERE id = ?", [$id]);
 
-        return redirect()->route('usuarios.index')->with('success', 'Usuario y foto borrados de la base de datos.');
+        return redirect()->route('usuarios.index')->with('success', 'Usuario eliminado correctamente.');
     }
 
     public function updatePassword(Request $request, $id)

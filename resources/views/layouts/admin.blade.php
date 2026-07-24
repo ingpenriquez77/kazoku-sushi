@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-    
+
     {{-- SELECT2 para buscadores en recetas --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css">
@@ -100,8 +100,8 @@
 
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
         <a href="{{ route('dashboard.index') }}" class="brand-link">
-            <img src="{{ asset('img/kazoku.png') }}" 
-                 alt="Logo" 
+            <img src="{{ asset('img/kazoku.png') }}"
+                 alt="Logo"
                  class="brand-image-custom img-circle elevation-3">
             <span class="brand-text font-weight-extrabold tracking-wider text-white">
                 Kazoku <span class="text-primary">Sushi</span>
@@ -111,7 +111,12 @@
         <div class="sidebar">
             <div class="user-panel mt-3 pb-3 mb-3 d-flex align-items-center">
                 <div class="image">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=3b82f6&color=fff&bold=true" class="img-circle elevation-2" alt="User Image">
+                    @php
+                        $userAvatar = (auth()->user()->avatar && strpos(auth()->user()->avatar, 'avatars/') === 0)
+                                      ? asset('storage/' . auth()->user()->avatar)
+                                      : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->name).'&background=3b82f6&color=fff&bold=true';
+                    @endphp
+                    <img src="{{ $userAvatar }}" class="img-circle elevation-2" style="width: 33px; height: 33px; object-fit: cover;" alt="User Image">
                 </div>
                 <div class="info">
                     <a href="#" class="d-block font-weight-bold text-white">{{ auth()->user()->name }}</a>
@@ -121,75 +126,92 @@
 
             <nav class="mt-2">
                 <ul class="nav nav-pills nav-sidebar flex-column nav-child-indent" data-widget="treeview" role="menu">
+
+                    {{-- DASHBOARD --}}
+                    @if(auth()->user()->hasPermission('dashboard'))
                     <li class="nav-item">
                         <a href="{{ route('dashboard.index') }}" class="nav-link {{ request()->is('dashboard*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-chart-line"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
+                    @endif
 
                     <li class="nav-header text-muted small">MÓDULOS</li>
-                    
+
+                    {{-- EMPLEADOS --}}
+                    @if(auth()->user()->hasPermission('usuarios'))
                     <li class="nav-item">
                       <a href="{{ route('usuarios.index') }}" class="nav-link {{ request()->is('usuarios*') ? 'active' : '' }}">
                           <i class="nav-icon fas fa-users-cog"></i>
                           <p>Empleados</p>
                       </a>
                     </li>
+                    @endif
 
+                    {{-- CATEGORÍAS --}}
+                    @if(auth()->user()->hasPermission('categorias'))
                     <li class="nav-item">
                       <a href="{{ route('categorias.index') }}" class="nav-link {{ request()->is('categorias*') ? 'active' : '' }}">
                           <i class="nav-icon fas fa-tags"></i>
                           <p>Categorías</p>
                       </a>
                     </li>
+                    @endif
 
+                    {{-- PRODUCTOS Y RECETAS --}}
+                    @if(auth()->user()->hasPermission('productos') || auth()->user()->hasPermission('recetas'))
                     <li class="nav-item">
                       <a href="{{ route('productos.index') }}" class="nav-link {{ request()->is('productos*') || request()->is('recetas*') ? 'active' : '' }}">
                           <i class="nav-icon fas fa-box-open"></i>
                           <p>Productos</p>
                       </a>
                     </li>
+                    @endif
 
+                    {{-- INVENTARIO DE INSUMOS --}}
+                    @if(auth()->user()->hasPermission('inventario'))
                     <li class="nav-item">
                         <a href="{{ route('insumos.index') }}" class="nav-link {{ request()->is('inventario/insumos*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-boxes"></i>
                             <p>Inventario de Insumos</p>
                         </a>
                     </li>
-                
+                    @endif
+
+                    {{-- PREVENTA / COMANDAS --}}
+                    @if(auth()->user()->hasPermission('preventa'))
                     <li class="nav-item">
                         <a href="{{ route('preventa.index') }}" class="nav-link {{ request()->is('preventa*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-clipboard-list"></i>
                             <p>Comandas (Mesas)</p>
                         </a>
                     </li>
-
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="nav-icon fas fa-receipt"></i>
-                            <p>Ventas</p>
-                        </a>
-                    </li>
+                    @endif
 
                     <li class="nav-header text-muted small">SISTEMA</li>
 
-                    {{-- NUEVO BOTÓN: CORTE DE CAJA (Z) --}}
+                    {{-- CORTE DE CAJA (Z) --}}
+                    @if(auth()->user()->hasPermission('caja'))
                     <li class="nav-item">
                         <a href="{{ route('corte.index') }}" class="nav-link {{ request()->is('caja/corte-z*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-cash-register text-warning"></i>
                             <p>Corte de Caja (Z)</p>
                         </a>
                     </li>
+                    @endif
 
-                    {{-- BOTÓN: DATOS FISCALES --}}
+                    {{-- DATOS FISCALES --}}
+                    @if(auth()->user()->hasPermission('configuracion'))
                     <li class="nav-item">
                         <a href="{{ route('datos_negocio.index') }}" class="nav-link {{ request()->is('configuracion/fiscal*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-file-invoice-dollar text-info"></i>
                             <p>Datos Fiscales</p>
                         </a>
                     </li>
-                    
+                    @endif
+
+                    {{-- CERRAR SESIÓN --}}
                     <li class="nav-item">
                         <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="nav-icon fas fa-power-off text-danger"></i>

@@ -12,9 +12,12 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'role',
+        'avatar',
+        'permissions',
     ];
 
     protected $hidden = [
@@ -27,7 +30,21 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array', // Converte el JSON automáticamente a Array PHP
         ];
+    }
+
+    /**
+     * Helper para verificar permisos de acceso
+     */
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->role === 'Administrador') {
+            return true;
+        }
+
+        $perms = $this->permissions ?? [];
+        return in_array($permission, $perms);
     }
 
     public function cortes()

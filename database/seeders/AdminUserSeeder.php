@@ -13,14 +13,18 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
+        $allPermissions = [
+            'dashboard', 'configuracion', 'usuarios', 'categorias',
+            'productos', 'inventario', 'recetas', 'preventa', 'caja'
+        ];
         User::updateOrCreate(
-            ['username' => 'admin'], // Busca por este campo para no duplicar si se ejecuta varias veces
+            ['username' => 'admin'],
             [
-                'name'              => 'Administrador',
-                'email'             => 'admin@kazoku.com',
-                'email_verified_at' => now(),
-                'password'          => Hash::make('010704'), // Cambia la contraseña por la que gustes
-                'role'              => 'Administrador',
+                'name' => 'Administrador General',
+                'email' => 'admin@kazoku.com',
+                'password' => Hash::make('010704'),
+                'role' => 'Administrador',
+                'permissions' => $allPermissions,
             ]
         );
     }
