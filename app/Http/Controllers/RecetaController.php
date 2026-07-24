@@ -11,12 +11,11 @@ class RecetaController extends Controller
     {
         $producto = DB::selectOne("SELECT * FROM productos WHERE id = ?", [$producto_id]);
         $insumos = DB::select("SELECT * FROM insumos ORDER BY nombre ASC");
-        
-        // Cambiamos a 'precio_costo_unitario' que es el nombre real en tu tabla
+
         $receta = DB::select("
             SELECT r.*, i.nombre as insumo_nombre, i.unidad_medida, i.precio_costo_unitario as precio_insumo
-            FROM recetas r 
-            JOIN insumos i ON r.insumo_id = i.id 
+            FROM recetas r
+            JOIN insumos i ON r.insumo_id = i.id
             WHERE r.producto_id = ?", [$producto_id]);
 
         return view('recetas.index', compact('producto', 'insumos', 'receta'));
@@ -24,7 +23,7 @@ class RecetaController extends Controller
 
     public function store(Request $request)
     {
-        DB::insert("INSERT INTO recetas (producto_id, insumo_id, cantidad_usada, created_at, updated_at) 
+        DB::insert("INSERT INTO recetas (producto_id, insumo_id, cantidad_usada, created_at, updated_at)
                     VALUES (?, ?, ?, NOW(), NOW())", [
             $request->producto_id,
             $request->insumo_id,

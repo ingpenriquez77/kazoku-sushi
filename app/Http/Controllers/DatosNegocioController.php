@@ -9,7 +9,6 @@ class DatosNegocioController extends Controller
 {
     public function index()
     {
-        // Obtenemos el primer registro o un objeto vacío si no existe
         $datos = DB::table('datos_negocio')->first();
         return view('configuracion.fiscal', compact('datos'));
     }
@@ -39,24 +38,22 @@ class DatosNegocioController extends Controller
         } else {
             $data['created_at'] = now();
             DB::table('datos_negocio')->insert($data);
-            
-            return redirect()->back()->with('success', 'Configuración guardada correctamente.');
         }
 
-        return redirect()->back()->with('success', 'Configuración actualizada correctamente.');
+        return redirect()->back()->with('success', 'Configuración guardada correctamente.');
     }
 
     public function getFiscalApi()
     {
         $datos = DB::table('datos_negocio')->first();
-        
+
         if (!$datos) {
             return response()->json([
                 'nombre_comercial' => 'KAZOKU SUSHI',
                 'mensaje_ticket' => '¡Gracias por su compra!'
             ]);
         }
-        
+
         return response()->json($datos);
     }
 }

@@ -10,22 +10,19 @@ class PreVentaController extends Controller
 {
     public function index()
     {
-        // 1. Obtener ventas pendientes
-        // CAMBIO CLAVE: TO_CHAR (Postgres) -> DATE_FORMAT (MySQL)
         $ventas_pendientes = DB::select("
-            SELECT v.*, u.name as mesero, 
-            DATE_FORMAT(v.created_at, '%H:%i') as hora 
-            FROM ventas v 
-            JOIN users u ON v.user_id = u.id 
+            SELECT v.*, u.name as mesero,
+            DATE_FORMAT(v.created_at, '%H:%i') as hora
+            FROM ventas v
+            JOIN users u ON v.user_id = u.id
             WHERE v.estado = 'pendiente'
             ORDER BY v.created_at DESC
         ");
-        
-        // 2. Traer detalles (MySQL maneja mejor los IN con subconsultas si las tablas tienen índices)
+
         $detalles_totales = DB::select("
             SELECT dv.venta_id, dv.cantidad, p.nombre, dv.comentario, dv.precio_unitario as precio
-            FROM detalle_ventas dv 
-            JOIN productos p ON dv.producto_id = p.id 
+            FROM detalle_ventas dv
+            JOIN productos p ON dv.producto_id = p.id
             WHERE dv.venta_id IN (SELECT id FROM ventas WHERE estado = 'pendiente')
             AND dv.estado_item != 'cancelado'
         ");
@@ -38,7 +35,6 @@ class PreVentaController extends Controller
     public function getInsumos($id)
     {
         try {
-            // El Query Builder de Laravel ya es agnóstico, funciona igual en MySQL
             $insumos = DB::table('recetas')
                 ->join('insumos', 'recetas.insumo_id', '=', 'insumos.id')
                 ->where('recetas.producto_id', $id)
@@ -59,11 +55,9 @@ class PreVentaController extends Controller
     public function store(Request $request)
     {
         $request->validate(['mesa' => 'required|max:50']);
-        
-        // Generación de código única
+
         $codigo = 'PED-' . strtoupper(substr(uniqid(), -8));
 
-        // insertGetId funciona perfectamente en MySQL con columnas AUTO_INCREMENT
         DB::table('ventas')->insert([
             'codigo_pedidido' => $codigo,
             'mesa' => $request->mesa,
@@ -82,22 +76,20 @@ class PreVentaController extends Controller
         $venta_id = $request->venta_id;
         $productos_ids = $request->productos;
         $cantidades = $request->cantidades;
-        $comentarios = $request->comentarios ?? []; 
-        $precios_con_extras = $request->precios; 
+        $comentarios = $request->comentarios ?? [];
+        $precios_con_extras = $request->precios;
 
         if (!$productos_ids) return back()->with('error', 'No hay productos.');
 
         try {
-            // MySQL requiere transacciones para asegurar consistencia en tablas relacionadas
             DB::transaction(function() use ($venta_id, $productos_ids, $cantidades, $comentarios, $precios_con_extras) {
-                
                 $venta = DB::table('ventas')->where('id', $venta_id)->first();
                 if (!$venta) throw new \Exception("Venta no encontrada.");
 
                 foreach ($productos_ids as $i => $producto_id) {
                     $precio_final = $precios_con_extras[$i];
                     $subtotal = $precio_final * $cantidades[$i];
-                    
+
                     DB::table('detalle_ventas')->insert([
                         'venta_id' => $venta_id,
                         'codigo_pedidido' => $venta->codigo_pedidido,
@@ -112,12 +104,11 @@ class PreVentaController extends Controller
                     ]);
                 }
 
-                // En MySQL el SUM() sobre un decimal es muy preciso.
                 $nuevo_total = DB::table('detalle_ventas')
                                 ->where('venta_id', $venta_id)
                                 ->where('estado_item', '!=', 'cancelado')
                                 ->sum('subtotal');
-                                
+
                 DB::table('ventas')->where('id', $venta_id)->update(['total' => $nuevo_total]);
             });
 
@@ -131,7 +122,6 @@ class PreVentaController extends Controller
     {
         try {
             DB::transaction(function() use ($id) {
-                // MySQL no tiene problemas con updates masivos dentro de transacciones
                 DB::table('detalle_ventas')->where('venta_id', $id)->update(['estado_item' => 'cancelado']);
                 DB::table('ventas')->where('id', $id)->update(['estado' => 'cancelado']);
             });
@@ -157,8 +147,6 @@ class PreVentaController extends Controller
             $cambio = $montoRecibido - $totalVenta;
 
             DB::transaction(function() use ($venta_id, $request, $montoRecibido, $cambio) {
-                
-                // 1. Actualizamos ventas
                 DB::table('ventas')->where('id', $venta_id)->update([
                     'estado' => 'pagado',
                     'metodo_pago' => $request->metodo_pago,
@@ -167,7 +155,6 @@ class PreVentaController extends Controller
                     'updated_at' => now()
                 ]);
 
-                // 2. Actualizamos detalle_ventas
                 DB::table('detalle_ventas')
                     ->where('venta_id', $venta_id)
                     ->where('estado_item', '!=', 'cancelado')
