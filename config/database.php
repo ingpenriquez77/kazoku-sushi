@@ -20,17 +20,11 @@ return [
 
     'connections' => [
 
+        // Configuraion necsaria para la conexion de MongoDB
         'mongodb' => [
             'driver'   => 'mongodb',
-            'dsn'      => env('DB_URI', env('MONGODB_URI')), // Soporta la cadena completa de conexión de MongoDB Atlas
-            'host'     => env('DB_HOST', '127.0.0.1'),
-            'port'     => env('DB_PORT', 27017),
-            'database' => env('DB_DATABASE', 'kazoku_sushi'),
-            'username' => env('DB_USERNAME', ''),
-            'password' => env('DB_PASSWORD', ''),
-            'options'  => [
-                'database' => env('DB_AUTHENTICATION_DATABASE', 'admin'), // Base de datos de autenticación por defecto en Mongo
-            ],
+            'dsn'      => env('DB_URI', 'mongodb://127.0.0.1:27017/prueba_tecnica'),
+            'database' => env('DB_DATABASE', 'prueba_tecnica'),
         ],
 
         'sqlite' => [
