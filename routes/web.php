@@ -13,32 +13,29 @@ use App\Http\Controllers\PreVentaController;
 use App\Http\Controllers\CorteZController;
 use App\Http\Controllers\Auth\LoginController;
 
-/*
-|--------------------------------------------------------------------------
-| Health Check / Endpoint de Diagnóstico (MongoDB & Servidor)
-|--------------------------------------------------------------------------
-*/
 Route::get('/health', function () {
     try {
-        // Ejecutamos comandos de diagnóstico en MongoDB Atlas
         $db = DB::connection('mongodb')->getMongoDB();
         $buildInfo = $db->command(['buildInfo' => 1])->toArray()[0];
         $serverStatus = $db->command(['serverStatus' => 1])->toArray()[0];
+
+        // Convertimos el tiempo UTC de Mongo al tiempo local de Culiacán
+        $mongoTime = isset($serverStatus['localTime'])
+            ? \Carbon\Carbon::parse($serverStatus['localTime']->toDateTime())->timezone(config('app.timezone'))->format('Y-m-d H:i:s T')
+            : now()->format('Y-m-d H:i:s T');
 
         return response()->json([
             'servidor' => [
                 'nombre_aplicacion' => config('app.name'),
                 'version_php'        => PHP_VERSION,
                 'version_laravel'    => app()->version(),
-                'hora_servidor'      => now()->toIso8601String(),
+                'hora_servidor'      => now()->format('Y-m-d H:i:s T'),
             ],
             'base_de_datos' => [
-                'motor'               => 'MongoDB',
-                'nombre_bd'           => DB::connection('mongodb')->getDatabaseName(),
-                'version_bd'          => $buildInfo['version'] ?? 'Desconocida',
-                'hora_fecha_bd'       => isset($serverStatus['localTime'])
-                                          ? $serverStatus['localTime']->toDateTime()->format('Y-m-d H:i:s T')
-                                          : now()->toIso8601String(),
+                'motor'         => 'MongoDB',
+                'nombre_bd'     => DB::connection('mongodb')->getDatabaseName(),
+                'version_bd'    => $buildInfo['version'] ?? 'Desconocida',
+                'hora_fecha_bd' => $mongoTime,
             ]
         ], 200);
 
