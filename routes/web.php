@@ -15,30 +15,38 @@ use App\Http\Controllers\Auth\LoginController;
 
 /*
 |--------------------------------------------------------------------------
-| Health Check / Endpoint de Diagnóstico (MongoDB)
+| Health Check / Endpoint de Diagnóstico (MongoDB & Servidor)
 |--------------------------------------------------------------------------
 */
 Route::get('/health', function () {
     try {
-        // Ejecuta el comando 'ping' en la base de datos de MongoDB
-        DB::connection('mongodb')->getPdo(); // O ejecuta: DB::connection('mongodb')->getMongoClient()->listDatabases();
-
-        // Forma rápida y segura para probar la conexión con el cliente de Mongo:
-        DB::connection('mongodb')->getMongoDB()->command(['ping' => 1]);
+        // Ejecutamos comandos de diagnóstico en MongoDB Atlas
+        $db = DB::connection('mongodb')->getMongoDB();
+        $buildInfo = $db->command(['buildInfo' => 1])->toArray()[0];
+        $serverStatus = $db->command(['serverStatus' => 1])->toArray()[0];
 
         return response()->json([
-            'status'    => 'OK',
-            'app'       => config('app.name'),
-            'database'  => 'connected',
-            'timestamp' => now()->toIso8601String(),
+            'servidor' => [
+                'nombre_aplicacion' => config('app.name'),
+                'version_php'        => PHP_VERSION,
+                'version_laravel'    => app()->version(),
+                'hora_servidor'      => now()->toIso8601String(),
+            ],
+            'base_de_datos' => [
+                'motor'               => 'MongoDB',
+                'nombre_bd'           => DB::connection('mongodb')->getDatabaseName(),
+                'version_bd'          => $buildInfo['version'] ?? 'Desconocida',
+                'hora_fecha_bd'       => isset($serverStatus['localTime'])
+                                          ? $serverStatus['localTime']->toDateTime()->format('Y-m-d H:i:s T')
+                                          : now()->toIso8601String(),
+            ]
         ], 200);
+
     } catch (\Exception $e) {
         return response()->json([
-            'status'    => 'ERROR',
-            'app'       => config('app.name'),
-            'database'  => 'disconnected',
-            'message'   => $e->getMessage(),
-            'timestamp' => now()->toIso8601String(),
+            'status'  => 'ERROR',
+            'mensaje' => 'Error al conectar con la base de datos',
+            'error'   => $e->getMessage(),
         ], 500);
     }
 })->name('health.check');
