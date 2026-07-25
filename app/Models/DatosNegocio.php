@@ -4,11 +4,12 @@ namespace App\Models;
 
 use MongoDB\Laravel\Eloquent\Model;
 
-class DatoNegocio extends Model
+class DatosNegocio extends Model
 {
-    protected $connection = 'mongodb';
-    protected $collection = 'datos_negocio';
+    // Nombre de la colección en MongoDB
+    protected $collection = 'datos_negocios';
 
+    // Campos permitidos para asignación masiva (updateOrCreate)
     protected $fillable = [
         'nombre_comercial',
         'razon_social',
