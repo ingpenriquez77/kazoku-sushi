@@ -11,6 +11,11 @@ class LoginController extends Controller
     // Mostrar el formulario de login
     public function showLoginForm()
     {
+        // Si el usuario ya inició sesión, redirigir directamente al dashboard
+        if (Auth::check()) {
+            return redirect()->route('dashboard.index');
+        }
+
         return view('auth.login');
     }
 
@@ -35,7 +40,8 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
 
-            return redirect()->intended('dashboard')
+            // Usamos route() para garantizar la URL absoluta de Laravel a /dashboard
+            return redirect()->intended(route('dashboard.index'))
                 ->with('success', '¡Bienvenido ' . Auth::user()->name . '!');
         }
 
@@ -51,6 +57,6 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+        return redirect()->route('login');
     }
 }
