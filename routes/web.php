@@ -15,30 +15,33 @@ use App\Http\Controllers\Auth\LoginController;
 
 /*
 |--------------------------------------------------------------------------
-| Health Check / Endpoint de Diagnóstico
+| Health Check / Endpoint de Diagnóstico (MongoDB)
 |--------------------------------------------------------------------------
 */
 Route::get('/health', function () {
     try {
-        // En MongoDB realizamos un ping al comando nativo para validar conexión
-        DB::connection('mongodb')->getPdo()
-            ? null
-            : DB::connection('mongodb')->command(['ping' => 1]);
+        // Ejecuta el comando 'ping' en la base de datos de MongoDB
+        DB::connection('mongodb')->getPdo(); // O ejecuta: DB::connection('mongodb')->getMongoClient()->listDatabases();
 
-        $dbStatus = 'connected';
+        // Forma rápida y segura para probar la conexión con el cliente de Mongo:
+        DB::connection('mongodb')->getMongoDB()->command(['ping' => 1]);
+
+        return response()->json([
+            'status'    => 'OK',
+            'app'       => config('app.name'),
+            'database'  => 'connected',
+            'timestamp' => now()->toIso8601String(),
+        ], 200);
     } catch (\Exception $e) {
-        $dbStatus = 'disconnected: ' . $e->getMessage();
+        return response()->json([
+            'status'    => 'ERROR',
+            'app'       => config('app.name'),
+            'database'  => 'disconnected',
+            'message'   => $e->getMessage(),
+            'timestamp' => now()->toIso8601String(),
+        ], 500);
     }
-
-    return response()->json([
-        'status'      => 'ok',
-        'timestamp'   => now()->toIso8601String(),
-        'database'    => [
-            'status' => $dbStatus,
-            'name'   => config('database.connections.mongodb.database'),
-        ]
-    ], $dbStatus === 'connected' ? 200 : 500);
-});
+})->name('health.check');
 
 /*
 |--------------------------------------------------------------------------
