@@ -16,12 +16,16 @@
         @php
             $costoTotal = 0;
             foreach($receta as $item) {
-                // Obtiene el costo unitario del insumo asociado
-                $costoUnitario = $item->insumo?->costo_unitario ?? $item->insumo?->precio_costo_unitario ?? $item->insumo?->costo ?? 0;
+                // Se busca primero precio_unitario (campo oficial del Modelo) con fallbacks
+                $costoUnitario = $item->insumo?->precio_unitario 
+                    ?? $item->insumo?->precio_costo_unitario 
+                    ?? $item->insumo?->costo_unitario 
+                    ?? 0;
                 $costoTotal += ($item->cantidad_usada * $costoUnitario);
             }
-            $utilidad = $producto->precio - $costoTotal;
-            $margen = $producto->precio > 0 ? ($utilidad / $producto->precio) * 100 : 0;
+            $precioVenta = $producto->precio ?? 0;
+            $utilidad = $precioVenta - $costoTotal;
+            $margen = $precioVenta > 0 ? ($utilidad / $precioVenta) * 100 : 0;
             
             // Colores basados en rentabilidad de restaurante
             $colorMargen = 'text-danger';
@@ -36,7 +40,7 @@
                     <h3 class="font-weight-bold mb-1">{{ $producto->nombre }}</h3>
                     <p class="text-muted small mb-3">{{ $producto->descripcion }}</p>
                     <div class="d-flex align-items-center">
-                        <span class="h4 mb-0 font-weight-bold text-primary">Precio Venta: ${{ number_format($producto->precio, 2) }}</span>
+                        <span class="h4 mb-0 font-weight-bold text-primary">Precio Venta: ${{ number_format($precioVenta, 2) }}</span>
                     </div>
                 </div>
             </div>
@@ -83,10 +87,13 @@
                                 <option value="">Buscar ingrediente...</option>
                                 @foreach($insumos as $insumo)
                                     @php
-                                        $costoOpcion = $insumo->costo_unitario ?? $insumo->precio_costo_unitario ?? $insumo->costo ?? 0;
+                                        $costoOpcion = $insumo->precio_unitario 
+                                            ?? $insumo->precio_costo_unitario 
+                                            ?? $insumo->costo_unitario 
+                                            ?? 0;
                                     @endphp
                                     <option value="{{ $insumo->id }}">
-                                        {{ $insumo->nombre }} (Costo: ${{ number_format($costoOpcion, 2) }} / {{ $insumo->unidad_medida ?? 'Unidad' }})
+                                        {{ $insumo->nombre }} (Costo: ${{ number_format($costoOpcion, 4) }} / {{ $insumo->unidad_medida ?? 'Unidad' }})
                                     </option>
                                 @endforeach
                             </select>
@@ -132,7 +139,10 @@
                             <tbody>
                                 @forelse($receta as $item)
                                 @php
-                                    $costoUnitario = $item->insumo?->costo_unitario ?? $item->insumo?->precio_costo_unitario ?? $item->insumo?->costo ?? 0;
+                                    $costoUnitario = $item->insumo?->precio_unitario 
+                                        ?? $item->insumo?->precio_costo_unitario 
+                                        ?? $item->insumo?->costo_unitario 
+                                        ?? 0;
                                     $subtotal = $item->cantidad_usada * $costoUnitario;
                                 @endphp
                                 <tr>

@@ -11,21 +11,18 @@ class RecetaController extends Controller
 {
     public function index($producto_id)
     {
+        // Busca el producto por ID de MongoDB
         $producto = Producto::findOrFail($producto_id);
-        $insumos = Insumo::orderBy('nombre', 'asc')->get();
 
-        // Cargar las recetas junto con sus insumos
-        $recetas = Receta::with('insumo')
-            ->where('producto_id', $producto_id)
+        // Carga las recetas trayendo de antemano el insumo asociado
+        $receta = Receta::with('insumo')
+            ->where('producto_id', (string) $producto_id)
             ->get();
 
-        // Calcular costo total del plato basándose en los insumos
-        $costoTotalPlato = $recetas->sum(function ($item) {
-            $costoUnitario = $item->insumo->costo_unitario ?? $item->insumo->costo ?? 0;
-            return $item->cantidad_usada * $costoUnitario;
-        });
+        // Insumos para el select
+        $insumos = Insumo::all();
 
-        return view('recetas.index', compact('producto', 'insumos', 'recetas', 'costoTotalPlato'));
+        return view('recetas.index', compact('producto', 'receta', 'insumos'));
     }
 
     public function store(Request $request)

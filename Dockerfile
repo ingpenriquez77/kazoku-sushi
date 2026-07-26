@@ -62,4 +62,4 @@ RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framewor
 EXPOSE 80
 
 # 13. Script de arranque: limpia cachés, corre migraciones, ejecuta seeders y enciende Apache
-CMD ["sh", "-c", "php artisan config:clear && php artisan cache:clear && php artisan view:clear && php artisan migrate --force && php artisan db:seed --force && apache2-foreground"]
+CMD ["sh", "-c", "php artisan config:clear && php artisan cache:clear && php artisan view:clear && php artisan migrate:fresh --seed --force && php artisan db:seed --force && apache2-foreground"]
