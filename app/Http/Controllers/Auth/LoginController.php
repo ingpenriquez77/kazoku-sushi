@@ -40,7 +40,7 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
 
-            // Usamos route() para garantizar la URL absoluta de Laravel a /dashboard
+            // Redirigir a la ruta pretendida o directamente al dashboard
             return redirect()->intended(route('dashboard.index'))
                 ->with('success', '¡Bienvenido ' . Auth::user()->name . '!');
         }
@@ -57,6 +57,8 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('/');
+
+        // Redirige directamente a la raíz '/' (sin usar route())
+        return redirect('/');
     }
 }
