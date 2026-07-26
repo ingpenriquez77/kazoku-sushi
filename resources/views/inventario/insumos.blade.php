@@ -44,19 +44,26 @@
                         </thead>
                         <tbody id="cuerpo-tabla">
                             @forelse($insumos as $insumo)
+                            @php
+                                // Detecta automáticamente el nombre del campo guardado en MongoDB
+                                $stockActual = $insumo->cantidad ?? $insumo->stock_actual ?? 0;
+                                $costoUnitario = $insumo->precio_unitario ?? $insumo->precio_costo_unitario ?? 0;
+                                $inversion = $stockActual * $costoUnitario;
+                                $stockMinimo = $insumo->stock_minimo ?? 0;
+                            @endphp
                             <tr class="fila-insumo">
                                 <td class="align-middle font-weight-bold nombre-txt">{{ $insumo->nombre }}</td>
                                 <td class="align-middle text-uppercase small">{{ $insumo->unidad_medida }}</td>
                                 <td class="align-middle font-weight-bold">
-                                    {{ number_format($insumo->stock_actual, 2) }}
+                                    {{ number_format($stockActual, 2) }}
                                 </td>
-                                <td class="align-middle text-muted small">{{ number_format($insumo->stock_minimo, 2) }}</td>
-                                <td class="align-middle">${{ number_format($insumo->precio_costo_unitario, 2) }}</td>
+                                <td class="align-middle text-muted small">{{ number_format($stockMinimo, 2) }}</td>
+                                <td class="align-middle">${{ number_format($costoUnitario, 4) }}</td>
                                 <td class="align-middle text-success font-weight-bold">
-                                    ${{ number_format($insumo->stock_actual * $insumo->precio_costo_unitario, 2) }}
+                                    ${{ number_format($inversion, 2) }}
                                 </td>
                                 <td class="align-middle">
-                                    @if($insumo->stock_actual <= $insumo->stock_minimo)
+                                    @if($stockActual <= $stockMinimo)
                                         <span class="badge badge-danger px-2">REORDENAR</span>
                                     @else
                                         <span class="badge badge-success px-2">SUFICIENTE</span>
@@ -93,7 +100,7 @@
                 </div>
             </div>
 
-            {{-- PAGINACIÓN DE 10 REGISTROS --}}
+            {{-- PAGINACIÓN --}}
             <div class="card-footer bg-white border-top">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="text-muted small">
@@ -142,9 +149,19 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Costo Inicial x Unidad</label>
-                        <input type="number" name="precio_costo_unitario" step="0.0001" class="form-control" required>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Cantidad Inicial</label>
+                                <input type="number" name="cantidad" step="0.01" class="form-control" value="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Costo Unitario ($)</label>
+                                <input type="number" name="precio_unitario" step="0.0001" class="form-control" required>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -202,8 +219,7 @@
 @push('js')
 <script>
 $(document).ready(function() {
-    
-    // 1. BUSCADOR INSTANTÁNEO (Filtra solo lo que está en la página actual)
+    // 1. BUSCADOR INSTANTÁNEO
     $("#buscador-tabla").on("input", function() {
         let valor = $(this).val().toLowerCase().trim();
         $(".fila-insumo").each(function() {
