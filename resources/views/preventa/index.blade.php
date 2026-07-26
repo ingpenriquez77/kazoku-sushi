@@ -244,6 +244,7 @@
                 <div class="modal-body text-center">
                     <h6 class="text-muted">TOTAL A PAGAR</h6>
                     <div class="total-display mb-4">$<span id="cobro_total_display">0.00</span></div>
+                    
                     <div class="form-group text-left">
                         <label>Método de Pago</label>
                         <select name="metodo_pago" id="metodo_pago" class="form-control form-control-lg">
@@ -252,10 +253,18 @@
                             <option value="Tarjeta">Tarjeta</option>
                         </select>
                     </div>
+
+                    {{-- CAMPO DINÁMICO PARA VOUCHER / FOLIO --}}
+                    <div class="form-group text-left" id="div_referencia" style="display: none;">
+                        <label id="lbl_referencia">Código de Autorización / Folio</label>
+                        <input type="text" name="referencia_pago" id="referencia_pago" class="form-control form-control-lg" placeholder="Ej: 849204">
+                    </div>
+
                     <div class="form-group text-left" id="div_pago_con">
                         <label>Efectivo Recibido</label>
                         <input type="number" name="pago_con" id="pago_con" class="form-control form-control-lg" step="0.01" required>
                     </div>
+
                     <div class="alert alert-warning py-3" id="div_cambio" style="display:none;">
                         <h4 class="mb-0 font-weight-bold">Cambio: $<span id="cambio_display">0.00</span></h4>
                     </div>
@@ -380,6 +389,7 @@
             $('#cobro_total_display').text(parseFloat(datosMesaActual.total).toLocaleString('es-MX', {minimumFractionDigits: 2}));
             $('#pago_con').val(datosMesaActual.total);
             $('#div_cambio').hide();
+            $('#metodo_pago').val('Efectivo').trigger('change'); // Reset a efectivo por defecto
             setTimeout(() => { $('#modalCobro').modal('show'); }, 400);
         });
 
@@ -394,12 +404,26 @@
             } else { $('#div_cambio').hide(); }
         });
 
+        // LÓGICA DE VISIBILIDAD DE MÉTODOS DE PAGO Y REFERENCIAS
         $('#metodo_pago').on('change', function() {
-            if($(this).val() !== 'Efectivo') {
+            let metodo = $(this).val();
+
+            if (metodo === 'Tarjeta') {
                 $('#pago_con').val($('#cobro_total_input').val()).attr('readonly', true);
                 $('#div_cambio').hide();
+                $('#div_referencia').fadeIn();
+                $('#lbl_referencia').text('Código de Autorización / N° Voucher');
+                $('#referencia_pago').attr('placeholder', 'Ej: 938201');
+            } else if (metodo === 'Transferencia') {
+                $('#pago_con').val($('#cobro_total_input').val()).attr('readonly', true);
+                $('#div_cambio').hide();
+                $('#div_referencia').fadeIn();
+                $('#lbl_referencia').text('Folio / Clave de Rastreo (SPEI)');
+                $('#referencia_pago').attr('placeholder', 'Ej: SPEI-884920');
             } else {
                 $('#pago_con').attr('readonly', false);
+                $('#div_referencia').fadeOut();
+                $('#referencia_pago').val('');
             }
         });
     });

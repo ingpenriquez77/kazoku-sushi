@@ -19,7 +19,6 @@ class PreVentaController extends Controller
             ->latest()
             ->get()
             ->map(function ($venta) {
-                // Formateamos la hora desde Carbon/Mongo UTC
                 $venta->mesero = $venta->user->name ?? 'N/A';
                 $venta->hora = $venta->created_at ? $venta->created_at->format('H:i') : '';
                 return $venta;
@@ -140,10 +139,11 @@ class PreVentaController extends Controller
     public function finalizarCobro(Request $request)
     {
         $request->validate([
-            'venta_id'    => 'required',
-            'metodo_pago' => 'required',
-            'pago_con'    => 'required|numeric',
-            'total_pagar' => 'required|numeric',
+            'venta_id'        => 'required',
+            'metodo_pago'     => 'required',
+            'pago_con'        => 'required|numeric',
+            'total_pagar'     => 'required|numeric',
+            'referencia_pago' => 'nullable|string|max:100', // Validación opcional para vouchers/folios
         ]);
 
         try {
@@ -154,10 +154,11 @@ class PreVentaController extends Controller
 
             $venta = Venta::findOrFail($venta_id);
             $venta->update([
-                'estado'      => 'pagado',
-                'metodo_pago' => $request->metodo_pago,
-                'monto_pagado'=> $montoRecibido,
-                'cambio'      => $cambio,
+                'estado'          => 'pagado',
+                'metodo_pago'     => $request->metodo_pago,
+                'referencia_pago' => $request->referencia_pago ?? null,
+                'monto_pagado'    => $montoRecibido,
+                'cambio'          => $cambio,
             ]);
 
             DetalleVenta::where('venta_id', $venta->_id)
