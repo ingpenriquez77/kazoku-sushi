@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             ProductosTableSeeder::class,
             InsumosTableSeeder::class,
             ComprasInsumosTableSeeder::class,
+            RecetaSeeder::class,
         ]);
     }
 }

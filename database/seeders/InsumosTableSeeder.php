@@ -5,51 +5,58 @@ namespace Database\Seeders;
 use App\Models\Insumo;
 use Illuminate\Database\Seeder;
 
-class InsumosTableSeeder extends Seeder
+class InsumoSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
+        // Inventario base para operacion inicial de carretita
         $insumos = [
-            ['nombre' => 'Aceite', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.03],
-            ['nombre' => 'Aguacate', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.05],
-            ['nombre' => 'Alga', 'unidad_medida' => 'unidad', 'stock_actual' => 0.00, 'stock_minimo' => 30.00, 'precio_costo_unitario' => 1.25],
-            ['nombre' => 'Anguila', 'unidad_medida' => 'ml', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.07],
-            ['nombre' => 'Arroz', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.035],
-            ['nombre' => 'Camaron', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.16],
-            ['nombre' => 'Carne de Res', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.1700],
-            ['nombre' => 'Cebollin', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.05],
-            ['nombre' => 'Cebollita Asada', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.021],
-            ['nombre' => 'Chile Caribe', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.023],
-            ['nombre' => 'Chipotle', 'unidad_medida' => 'ml', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.0152173913],
-            ['nombre' => 'Contenedor', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 25.00, 'precio_costo_unitario' => 2.40],
-            ['nombre' => 'Gratinado', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.16],
-            ['nombre' => 'Hoja de Arroz', 'unidad_medida' => 'unidad', 'stock_actual' => 0.00, 'stock_minimo' => 5.00, 'precio_costo_unitario' => 3.00],
-            ['nombre' => 'Mayonesa', 'unidad_medida' => 'ml', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.04605263158],
-            ['nombre' => 'Panco', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.06],
-            ['nombre' => 'Philadelphia', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.15],
-            ['nombre' => 'Pollo', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 1500.00, 'precio_costo_unitario' => 0.06],
-            ['nombre' => 'Recipiente Aderezos', 'unidad_medida' => 'unidad', 'stock_actual' => 0.00, 'stock_minimo' => 30.00, 'precio_costo_unitario' => 0.54],
-            ['nombre' => 'Recipiente Soya', 'unidad_medida' => 'unidad', 'stock_actual' => 0.00, 'stock_minimo' => 30.00, 'precio_costo_unitario' => 0.90],
-            ['nombre' => 'Siracha', 'unidad_medida' => 'ml', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.12],
-            ['nombre' => 'Soya', 'unidad_medida' => 'ml', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.01571428571],
-            ['nombre' => 'Surimi', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.08],
-            ['nombre' => 'Tampico', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 10.00, 'precio_costo_unitario' => 6.00],
-            ['nombre' => 'Tenedor', 'unidad_medida' => 'unidad', 'stock_actual' => 0.00, 'stock_minimo' => 10.00, 'precio_costo_unitario' => 0.22],
-            ['nombre' => 'Tocino', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.10],
-            ['nombre' => 'Zanahoria', 'unidad_medida' => 'gr', 'stock_actual' => 0.00, 'stock_minimo' => 500.00, 'precio_costo_unitario' => 0.014],
+            // --- PROTEÍNAS ---
+            ['nombre' => 'Carne de Res', 'cantidad' => 1500.00, 'unidad_medida' => 'gr', 'stock_minimo' => 500.00, 'precio_unitario' => 0.1700],
+            ['nombre' => 'Camaron', 'cantidad' => 1500.00, 'unidad_medida' => 'gr', 'stock_minimo' => 500.00, 'precio_unitario' => 0.1600],
+            ['nombre' => 'Pollo', 'cantidad' => 2000.00, 'unidad_medida' => 'gr', 'stock_minimo' => 500.00, 'precio_unitario' => 0.0600],
+            ['nombre' => 'Tocino', 'cantidad' => 1000.00, 'unidad_medida' => 'gr', 'stock_minimo' => 300.00, 'precio_unitario' => 0.1000],
+            ['nombre' => 'Surimi', 'cantidad' => 1000.00, 'unidad_medida' => 'gr', 'stock_minimo' => 300.00, 'precio_unitario' => 0.0800],
+
+            // --- LÁCTEOS Y CREMAS ---
+            ['nombre' => 'Philadelphia', 'cantidad' => 1500.00, 'unidad_medida' => 'gr', 'stock_minimo' => 400.00, 'precio_unitario' => 0.1500],
+            ['nombre' => 'Gratinado', 'cantidad' => 1000.00, 'unidad_medida' => 'gr', 'stock_minimo' => 300.00, 'precio_unitario' => 0.1600],
+            ['nombre' => 'Mayonesa', 'cantidad' => 1000.00, 'unidad_medida' => 'ml', 'stock_minimo' => 300.00, 'precio_unitario' => 0.0460],
+
+            // --- BASES Y EMPANIZADO ---
+            ['nombre' => 'Arroz', 'cantidad' => 3000.00, 'unidad_medida' => 'gr', 'stock_minimo' => 1000.00, 'precio_unitario' => 0.0350],
+            ['nombre' => 'Alga', 'cantidad' => 50.00, 'unidad_medida' => 'unidad', 'stock_minimo' => 15.00, 'precio_unitario' => 1.2500],
+            ['nombre' => 'Panco', 'cantidad' => 1000.00, 'unidad_medida' => 'gr', 'stock_minimo' => 300.00, 'precio_unitario' => 0.0600],
+            ['nombre' => 'Aceite', 'cantidad' => 2000.00, 'unidad_medida' => 'gr', 'stock_minimo' => 500.00, 'precio_unitario' => 0.0300],
+            ['nombre' => 'Hoja de Arroz', 'cantidad' => 20.00, 'unidad_medida' => 'unidad', 'stock_minimo' => 5.00, 'precio_unitario' => 3.0000],
+
+            // --- VERDURAS Y SALSAS ---
+            ['nombre' => 'Aguacate', 'cantidad' => 1000.00, 'unidad_medida' => 'gr', 'stock_minimo' => 300.00, 'precio_unitario' => 0.0500],
+            ['nombre' => 'Chile Caribe', 'cantidad' => 500.00, 'unidad_medida' => 'gr', 'stock_minimo' => 150.00, 'precio_unitario' => 0.0230],
+            ['nombre' => 'Cebollin', 'cantidad' => 300.00, 'unidad_medida' => 'gr', 'stock_minimo' => 100.00, 'precio_unitario' => 0.0500],
+            ['nombre' => 'Soya', 'cantidad' => 1500.00, 'unidad_medida' => 'ml', 'stock_minimo' => 500.00, 'precio_unitario' => 0.0157],
+            ['nombre' => 'Siracha', 'cantidad' => 500.00, 'unidad_medida' => 'ml', 'stock_minimo' => 150.00, 'precio_unitario' => 0.1200],
+            ['nombre' => 'Anguila', 'cantidad' => 500.00, 'unidad_medida' => 'ml', 'stock_minimo' => 150.00, 'precio_unitario' => 0.0700],
+            ['nombre' => 'Tampico', 'cantidad' => 500.00, 'unidad_medida' => 'gr', 'stock_minimo' => 100.00, 'precio_unitario' => 6.0000],
+
+            // --- EMPAQUES Y DESECHABLES ---
+            ['nombre' => 'Contenedor', 'cantidad' => 50.00, 'unidad_medida' => 'unidad', 'stock_minimo' => 15.00, 'precio_unitario' => 2.4000],
+            ['nombre' => 'Recipiente Aderezos', 'cantidad' => 50.00, 'unidad_medida' => 'unidad', 'stock_minimo' => 15.00, 'precio_unitario' => 0.5400],
+            ['nombre' => 'Recipiente Soya', 'cantidad' => 50.00, 'unidad_medida' => 'unidad', 'stock_minimo' => 15.00, 'precio_unitario' => 0.9000],
+            ['nombre' => 'Tenedor', 'cantidad' => 50.00, 'unidad_medida' => 'unidad', 'stock_minimo' => 15.00, 'precio_unitario' => 0.2200],
         ];
 
         foreach ($insumos as $insumo) {
             Insumo::updateOrCreate(
-                ['nombre' => $insumo['nombre']], // Busca por nombre único
+                ['nombre' => $insumo['nombre']],
                 [
-                    'unidad_medida'         => $insumo['unidad_medida'],
-                    'stock_actual'          => $insumo['stock_actual'],
-                    'stock_minimo'          => $insumo['stock_minimo'],
-                    'precio_costo_unitario' => $insumo['precio_costo_unitario'],
+                    'cantidad'        => $insumo['cantidad'],
+                    'unidad_medida'   => $insumo['unidad_medida'],
+                    'precio_unitario' => $insumo['precio_unitario'],
+                    'stock_minimo'    => $insumo['stock_minimo'],
                 ]
             );
         }
