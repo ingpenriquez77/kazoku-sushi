@@ -5,14 +5,10 @@ namespace Database\Seeders;
 use App\Models\Insumo;
 use Illuminate\Database\Seeder;
 
-class InsumoSeeder extends Seeder
+class InsumosTableSeeder extends Seeder // <-- Asegúrate de que diga InsumosTableSeeder y NO InsumoSeeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Inventario base para operacion inicial de carretita
         $insumos = [
             // --- PROTEÍNAS ---
             ['nombre' => 'Carne de Res', 'cantidad' => 1500.00, 'unidad_medida' => 'gr', 'stock_minimo' => 500.00, 'precio_unitario' => 0.1700],
