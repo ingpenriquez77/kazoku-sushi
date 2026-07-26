@@ -18,11 +18,12 @@ class Receta extends Model
 
     public function insumo()
     {
-        return $this->belongsTo(Insumo::class);
+        // Forzamos la relación belongsTo sobre el modelo de MongoDB
+        return $this->belongsTo(Insumo::class, 'insumo_id', '_id');
     }
 
     public function producto()
     {
-        return $this->belongsTo(Producto::class);
+        return $this->belongsTo(Producto::class, 'producto_id', '_id');
     }
 }

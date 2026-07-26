@@ -16,7 +16,9 @@
         @php
             $costoTotal = 0;
             foreach($receta as $item) {
-                $costoTotal += ($item->cantidad_usada * $item->precio_insumo);
+                // Obtiene el costo unitario del insumo asociado
+                $costoUnitario = $item->insumo?->costo_unitario ?? $item->insumo?->precio_costo_unitario ?? $item->insumo?->costo ?? 0;
+                $costoTotal += ($item->cantidad_usada * $costoUnitario);
             }
             $utilidad = $producto->precio - $costoTotal;
             $margen = $producto->precio > 0 ? ($utilidad / $producto->precio) * 100 : 0;
@@ -80,8 +82,11 @@
                             <select name="insumo_id" class="form-control select2" required>
                                 <option value="">Buscar ingrediente...</option>
                                 @foreach($insumos as $insumo)
+                                    @php
+                                        $costoOpcion = $insumo->costo_unitario ?? $insumo->precio_costo_unitario ?? $insumo->costo ?? 0;
+                                    @endphp
                                     <option value="{{ $insumo->id }}">
-                                        {{ $insumo->nombre }} (Costo: ${{ number_format($insumo->precio_costo_unitario, 2) }} / {{ $insumo->unidad_medida }})
+                                        {{ $insumo->nombre }} (Costo: ${{ number_format($costoOpcion, 2) }} / {{ $insumo->unidad_medida ?? 'Unidad' }})
                                     </option>
                                 @endforeach
                             </select>
@@ -90,7 +95,7 @@
                         <div class="form-group">
                             <label class="small font-weight-bold">Cantidad Utilizada</label>
                             <div class="input-group">
-                                <input type="number" name="cantidad_usada" step="0.0001" class="form-control" placeholder="0.000" required>
+                                <input type="number" name="cantidad_usada" step="0.0001" min="0.0001" class="form-control" placeholder="0.000" required>
                                 <div class="input-group-append">
                                     <span class="input-group-text small">Cant.</span>
                                 </div>
@@ -126,15 +131,23 @@
                             </thead>
                             <tbody>
                                 @forelse($receta as $item)
+                                @php
+                                    $costoUnitario = $item->insumo?->costo_unitario ?? $item->insumo?->precio_costo_unitario ?? $item->insumo?->costo ?? 0;
+                                    $subtotal = $item->cantidad_usada * $costoUnitario;
+                                @endphp
                                 <tr>
-                                    <td class="px-4 align-middle font-weight-bold">{{ $item->insumo_nombre }}</td>
+                                    <td class="px-4 align-middle font-weight-bold">
+                                        {{ $item->insumo?->nombre ?? 'Insumo no disponible' }}
+                                    </td>
                                     <td class="align-middle text-primary font-weight-bold">
                                         {{ number_format($item->cantidad_usada, 3) }} 
-                                        <small class="text-muted font-weight-normal">{{ $item->unidad_medida }}</small>
+                                        <small class="text-muted font-weight-normal">{{ $item->insumo?->unidad_medida ?? '' }}</small>
                                     </td>
-                                    <td class="align-middle text-muted small">${{ number_format($item->precio_insumo, 4) }}</td>
+                                    <td class="align-middle text-muted small">
+                                        ${{ number_format($costoUnitario, 4) }}
+                                    </td>
                                     <td class="align-middle font-weight-bold text-danger">
-                                        ${{ number_format($item->cantidad_usada * $item->precio_insumo, 2) }}
+                                        ${{ number_format($subtotal, 2) }}
                                     </td>
                                     <td class="text-right px-4 align-middle">
                                         <form action="{{ route('recetas.destroy', $item->id) }}" method="POST" onsubmit="return confirm('¿Eliminar este insumo de la receta?')">
