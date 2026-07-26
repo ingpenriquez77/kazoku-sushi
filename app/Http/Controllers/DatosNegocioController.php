@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DatoNegocio;
+use App\Models\DatosNegocio;
 use Illuminate\Http\Request;
 
 class DatosNegocioController extends Controller
 {
     public function index()
     {
-        $datos = DatoNegocio::first();
+        $datos = DatosNegocio::first();
         return view('configuracion.fiscal', compact('datos'));
     }
 
@@ -31,13 +31,13 @@ class DatosNegocioController extends Controller
         ];
 
         // updateOrCreate busca un registro existente; si no hay ninguno, lo crea
-        $datos = DatoNegocio::first();
+        $datos = DatosNegocio::first();
 
         if ($datos) {
             $datos->update($data);
             $mensaje = 'Configuración actualizada correctamente.';
         } else {
-            DatoNegocio::create($data);
+            DatosNegocio::create($data);
             $mensaje = 'Configuración guardada correctamente.';
         }
 
@@ -46,7 +46,7 @@ class DatosNegocioController extends Controller
 
     public function getFiscalApi()
     {
-        $datos = DatoNegocio::first();
+        $datos = DatosNegocio::first();
 
         if (!$datos) {
             return response()->json([
