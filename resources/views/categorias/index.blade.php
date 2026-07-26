@@ -39,7 +39,7 @@
                                     <td class="align-middle text-muted">{{ $cat->descripcion ?? 'Sin descripción' }}</td>
                                     <td class="text-center align-middle">
                                         <span class="badge badge-pill badge-primary px-3 py-2" style="font-size: 0.85rem;">
-                                            <i class="fas fa-box-open mr-1"></i> {{ $cat->productos_count ?? $cat->productos?->count() ?? 0 }}
+                                            <i class="fas fa-box-open mr-1"></i> {{ $cat->productos->count() }}
                                         </span>
                                     </td>
                                     <td class="text-center align-middle">

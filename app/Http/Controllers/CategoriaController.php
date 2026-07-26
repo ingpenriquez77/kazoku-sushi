@@ -9,8 +9,8 @@ class CategoriaController extends Controller
 {
     public function index()
     {
-        // Obtenemos las categorías ordenadas e incluyendo el conteo automático de productos
-        $categorias = Categoria::withCount('productos')
+        // Usamos with('productos') que es 100% compatible con MongoDB Eloquent
+        $categorias = Categoria::with('productos')
             ->latest()
             ->get();
 
@@ -24,7 +24,6 @@ class CategoriaController extends Controller
             'descripcion' => 'nullable|string'
         ]);
 
-        // Guardado automático mediante Eloquent
         Categoria::create([
             'nombre'      => $request->nombre,
             'descripcion' => $request->descripcion,
@@ -35,7 +34,6 @@ class CategoriaController extends Controller
 
     public function destroy($id)
     {
-        // Eliminación usando Eloquent
         $categoria = Categoria::findOrFail($id);
         $categoria->delete();
 
