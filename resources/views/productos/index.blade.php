@@ -28,19 +28,19 @@
 
     <div class="col-md-12">
         <div class="card shadow border-0">
-            {{-- TÍTULO DE LA SECCIÓN INTEGRADO EN LA TARJETA --}}
             <div class="card-header bg-white">
                 <h3 class="card-title font-weight-bold text-uppercase text-muted">
                     <i class="fas fa-hamburger mr-2"></i> Gestión de Productos
                 </h3>
             </div>
-            
+
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover table-striped mb-0">
                         <thead class="bg-dark text-white">
                             <tr>
                                 <th>Nombre del Producto</th>
+                                <th>Categoría</th>
                                 <th>Descripción</th>
                                 <th>Precio de Venta</th>
                                 <th class="text-center">Acciones</th>
@@ -51,6 +51,11 @@
                             <tr class="fila-producto">
                                 <td class="align-middle font-weight-bold text-uppercase nombre-prod">
                                     {{ $producto->nombre }}
+                                </td>
+                                <td class="align-middle">
+                                    <span class="badge badge-info">
+                                        {{ $producto->categoria->nombre ?? 'Sin Categoría' }}
+                                    </span>
                                 </td>
                                 <td class="align-middle text-muted small">
                                     {{ $producto->descripcion ?? 'Sin descripción' }}
@@ -66,16 +71,17 @@
                                         </a>
 
                                         {{-- BOTÓN EDITAR --}}
-                                        <button class="btn btn-sm btn-info btn-edit" 
-                                                data-id="{{ $producto->id }}" 
+                                        <button class="btn btn-sm btn-info btn-edit"
+                                                data-id="{{ $producto->id }}"
                                                 data-nombre="{{ $producto->nombre }}"
+                                                data-categoria_id="{{ $producto->categoria_id }}"
                                                 data-descripcion="{{ $producto->descripcion }}"
                                                 data-precio="{{ $producto->precio }}"
                                                 data-toggle="modal" data-target="#modalEditProducto"
                                                 title="Editar Producto">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        
+
                                         {{-- BOTÓN ELIMINAR --}}
                                         <form action="{{ route('productos.destroy', $producto->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este producto?')">
                                             @csrf
@@ -89,7 +95,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center py-5 text-muted">
+                                <td colspan="5" class="text-center py-5 text-muted">
                                     <i class="fas fa-info-circle mr-1"></i> No hay productos registrados.
                                 </td>
                             </tr>
@@ -98,12 +104,11 @@
                     </table>
                 </div>
             </div>
-            
-            {{-- PIE DE PÁGINA: PAGINACIÓN --}}
+
             <div class="card-footer bg-white border-top">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="text-muted small">
-                        Mostrando registros del <b>{{ $productos->firstItem() ?? 0 }}</b> al <b>{{ $productos->lastItem() ?? 0 }}</b> 
+                        Mostrando registros del <b>{{ $productos->firstItem() ?? 0 }}</b> al <b>{{ $productos->lastItem() ?? 0 }}</b>
                         de un total de <b>{{ $productos->total() }}</b>
                     </div>
                     <div class="pagination-sm">
@@ -129,8 +134,17 @@
                 @csrf
                 <div class="modal-body">
                     <div class="form-group">
+                        <label>Categoría</label>
+                        <select name="categoria_id" class="form-control" required>
+                            <option value="" disabled selected>-- Seleccione una categoría --</option>
+                            @foreach($categorias as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>Nombre del Producto</label>
-                        <input type="text" name="nombre" class="form-control" placeholder="Ej: Hamburguesa Especial" required>
+                        <input type="text" name="nombre" class="form-control" placeholder="Ej: Chile Relleno" required>
                     </div>
                     <div class="form-group">
                         <label>Descripción</label>
@@ -164,6 +178,15 @@
                 @method('PUT')
                 <div class="modal-body">
                     <div class="form-group">
+                        <label>Categoría</label>
+                        <select name="categoria_id" id="edit_categoria_id" class="form-control" required>
+                            <option value="" disabled>-- Seleccione una categoría --</option>
+                            @foreach($categorias as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>Nombre del Producto</label>
                         <input type="text" name="nombre" id="edit_nombre" class="form-control" required>
                     </div>
@@ -188,7 +211,7 @@
 @push('js')
 <script>
 $(document).ready(function() {
-    // 1. Buscador instantáneo (en la página actual)
+    // 1. Buscador instantáneo
     $("#buscador-productos").on("input", function() {
         let valor = $(this).val().toLowerCase().trim();
         $(".fila-producto").each(function() {
@@ -197,16 +220,17 @@ $(document).ready(function() {
         });
     });
 
-    // 2. Llenar modal de edición dinámicamente
+    // 2. Llenar modal de edición dinámicamente con categoría
     $('.btn-edit').on('click', function() {
         const id = $(this).data('id');
         const nombre = $(this).data('nombre');
+        const categoria_id = $(this).data('categoria_id');
         const descripcion = $(this).data('descripcion');
         const precio = $(this).data('precio');
-        
-        // Ajustamos la URL del form (Asegúrate de que la ruta coincida con tu resource)
+
         $('#formEditProducto').attr('action', '/productos/' + id);
         $('#edit_nombre').val(nombre);
+        $('#edit_categoria_id').val(categoria_id);
         $('#edit_descripcion').val(descripcion);
         $('#edit_precio').val(precio);
     });

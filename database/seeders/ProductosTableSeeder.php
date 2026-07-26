@@ -8,9 +8,6 @@ use Illuminate\Database\Seeder;
 
 class ProductosTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $productos = [
@@ -74,18 +71,17 @@ class ProductosTableSeeder extends Seeder
         ];
 
         foreach ($productos as $item) {
-            // Buscamos dinámicamente la categoría creada por el CategoriasTableSeeder
             $categoria = Categoria::where('nombre', $item['categoria'])->first();
 
             if ($categoria) {
                 Producto::updateOrCreate(
                     [
-                        'nombre'       => $item['nombre'],
-                        'categoria_id' => $categoria->id, // Asigna el ObjectId real de Mongo
+                        'nombre' => $item['nombre'],
                     ],
                     [
-                        'descripcion' => $item['descripcion'],
-                        'precio'      => $item['precio'],
+                        'categoria_id' => $categoria->_id,
+                        'descripcion'  => $item['descripcion'],
+                        'precio'       => (float) $item['precio'],
                     ]
                 );
             }

@@ -5,16 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Producto;
 use App\Models\Receta;
 use App\Models\Insumo;
+use App\Models\Producto;
+use App\Models\Categoria;
 use Illuminate\Http\Request;
 
 class ProductoController extends Controller
 {
     public function index()
     {
-        // Eloquent gestiona la paginación nativamente en MongoDB
-        $productos = Producto::orderBy('nombre', 'asc')->paginate(10);
+        $productos = Producto::with('categoria')->paginate(10);
+        $categorias = Categoria::orderBy('nombre', 'asc')->get();
 
-        return view('productos.index', compact('productos'));
+        return view('productos.index', compact('productos', 'categorias'));
     }
 
     public function store(Request $request)

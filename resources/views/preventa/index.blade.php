@@ -9,24 +9,24 @@
 @push('css')
 <style>
     .select2-container { width: 100% !important; z-index: 9999 !important; }
-    .card-mesa { 
-        position: relative; border-radius: 12px; border-left: 5px solid #ffc107 !important; 
+    .card-mesa {
+        position: relative; border-radius: 12px; border-left: 5px solid #ffc107 !important;
         transition: transform 0.2s; background-color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2);
     }
     .card-mesa:hover { transform: translateY(-5px); }
-    .btn-cancelar-comanda { 
-        position: absolute; top: -10px; right: -10px; background: #dc3545; color: white; 
-        border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; 
+    .btn-cancelar-comanda {
+        position: absolute; top: -10px; right: -10px; background: #dc3545; color: white;
+        border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center;
         justify-content: center; font-size: 14px; border: 2px solid white; cursor: pointer; z-index: 10;
     }
-    .lista-comanda-previa { 
-        font-size: 0.85rem; max-height: 200px; overflow-y: auto; 
-        background: #f4f6f9; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px; 
+    .lista-comanda-previa {
+        font-size: 0.85rem; max-height: 200px; overflow-y: auto;
+        background: #f4f6f9; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px;
     }
     .item-comanda { border-bottom: 1px dashed #dee2e6; padding: 5px 0; }
     .item-comentario { font-size: 0.75rem; color: #6c757d; font-style: italic; display: block; line-height: 1.2; margin-top: 2px; }
     .item-precio-unit { font-size: 0.75rem; font-weight: bold; color: #28a745; }
-    
+
     .ticket-visual {
         background: #fff; border: 1px solid #ddd; padding: 15px;
         font-family: 'Courier New', Courier, monospace; color: #000;
@@ -57,29 +57,29 @@
         @forelse($ventas_pendientes as $venta)
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                 <div class="card card-mesa h-100 shadow-sm">
-                    <button class="btn-cancelar-comanda" onclick="confirmarCancelarComanda({{ $venta->id }}, '{{ $venta->mesa }}')" title="Anular Comanda">
+                    <button class="btn-cancelar-comanda" onclick="confirmarCancelarComanda('{{ $venta->id }}', '{{ $venta->mesa }}')" title="Anular Comanda">
                         <i class="fas fa-times"></i>
                     </button>
                     <div class="card-body p-3 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h5 class="font-weight-bold m-0 text-dark">{{ $venta->mesa }}</h5>
                             <small class="text-muted font-weight-bold text-uppercase">
-                                <i class="fas fa-user-tag mr-1"></i> {{ $venta->mesero }}
+                                <i class="fas fa-user-tag mr-1"></i> {{ $venta->mesero ?? 'Caja' }}
                             </small>
                         </div>
                         <h4 class="text-success font-weight-bold mb-3">${{ number_format($venta->total, 2) }}</h4>
-                        
+
                         <div class="lista-comanda-previa mb-3 flex-grow-1">
                             @php $tieneDetalle = false; @endphp
                             @foreach($detalles_totales as $det)
                                 @if($det->venta_id == $venta->id)
                                     @php $tieneDetalle = true; @endphp
-                                    <div class="item-comanda" 
-                                         data-nombre="{{ $det->nombre }}" 
-                                         data-cantidad="{{ $det->cantidad }}" 
-                                         data-precio="{{ $det->precio }}" 
+                                    <div class="item-comanda"
+                                         data-nombre="{{ $det->nombre }}"
+                                         data-cantidad="{{ $det->cantidad }}"
+                                         data-precio="{{ $det->precio }}"
                                          data-comentario="{{ $det->comentario }}">
-                                        
+
                                         <div class="d-flex justify-content-between">
                                             <span><span class="font-weight-bold text-primary">{{ $det->cantidad }}x</span> {{ $det->nombre }}</span>
                                             <span class="item-precio-unit">${{ number_format($det->precio * $det->cantidad, 2) }}</span>
@@ -95,14 +95,14 @@
 
                         <div class="row no-gutters">
                             <div class="col-6 pr-1">
-                                <button type="button" class="btn btn-primary btn-block btn-sm font-weight-bold btn-agregar" 
+                                <button type="button" class="btn btn-primary btn-block btn-sm font-weight-bold btn-agregar"
                                         data-id="{{ $venta->id }}" data-mesa="{{ $venta->mesa }}">
                                     <i class="fas fa-utensils mr-1"></i> COMANDAR
                                 </button>
                             </div>
                             <div class="col-6 pl-1">
-                                <button type="button" class="btn btn-success btn-block btn-sm font-weight-bold" 
-                                        onclick="abrirVistaTicket({{ $venta->id }}, '{{ $venta->mesa }}', {{ $venta->total }})">
+                                <button type="button" class="btn btn-success btn-block btn-sm font-weight-bold"
+                                        onclick="abrirVistaTicket('{{ $venta->id }}', '{{ $venta->mesa }}', {{ $venta->total }})">
                                     <i class="fas fa-cash-register mr-1"></i> PAGAR
                                 </button>
                             </div>
@@ -201,7 +201,6 @@
             <div class="modal-body p-4 bg-light">
                 <div id="ticket-print-area" class="ticket-visual shadow-sm">
                     <div class="text-center mb-2">
-                        {{-- LOGO RESTAURADO --}}
                         <img src="{{ asset('img/kazoku.png') }}" alt="Logo" class="img-fluid mb-2" style="max-height: 70px; filter: grayscale(100%);">
                         <h5 class="font-weight-bold mb-0" id="tk-nombre-negocio">KAZOKU SUSHI</h5>
                         <div id="tk-razon-social" class="small"></div>
@@ -278,63 +277,86 @@
     let datosMesaActual = {};
 
     $(document).ready(function() {
-        $('.select2').select2({ placeholder: "Buscar...", theme: 'bootstrap4' });
+        // Inicializar Select2 en el modal
+        $('.select2').select2({ placeholder: "Buscar producto...", theme: 'bootstrap4' });
 
         // Evento Botón Comandar
         $(document).on('click', '.btn-agregar', function() {
             let id = $(this).data('id');
             let mesa = $(this).data('mesa');
+
             $('#modal_venta_id').val(id);
             $('#labelMesa').text("Comandar: " + mesa);
             $('#ticket-mesa-nombre').text(mesa);
+
+            // Limpiar formulario interno del modal
             productosTemporal = [];
             actualizarTicket();
+            $('#select-producto').val(null).trigger('change');
+            $('#contenedor-ingredientes').hide();
+            $('#seccion-detalles-producto').hide();
+
             $('#modalAgregarProducto').modal('show');
         });
 
-        // Cargar Insumos
+        // Cargar Insumos al seleccionar Producto
         $('#select-producto').on('change', function() {
             let pid = $(this).val();
             if(pid) {
                 $('#contenedor-ingredientes').show();
                 $.get('/preventa/insumos/' + pid, function(data) {
                     let html = '';
-                    if(data.insumos.length > 0) {
+                    if(data.insumos && data.insumos.length > 0) {
                         html += '<p class="badge badge-secondary w-100">Ingredientes</p>';
                         data.insumos.forEach(i => html += `<div class="small d-inline-block mr-3"><input type="checkbox" class="check-ingrediente" value="${i.nombre}" checked> ${i.nombre}</div>`);
                     }
-                    if(data.extras.length > 0) {
+                    if(data.extras && data.extras.length > 0) {
                         html += '<p class="badge badge-success w-100 mt-2">Extras</p>';
                         data.extras.forEach(e => html += `<div class="small d-inline-block mr-3"><input type="checkbox" class="check-extra" value="${e.nombre}" data-precio="${e.precio}"> +${e.nombre} ($${e.precio})</div>`);
                     }
                     $('#lista-checkbox-ingredientes').html(html || '<div class="text-muted small">Sin adicionales.</div>');
                     $('#seccion-detalles-producto').show();
+                }).fail(function() {
+                    $('#lista-checkbox-ingredientes').html('<div class="text-muted small">Sin adicionales.</div>');
+                    $('#seccion-detalles-producto').show();
                 });
+            } else {
+                $('#contenedor-ingredientes').hide();
+                $('#seccion-detalles-producto').hide();
             }
         });
 
-        // Confirmar Item
+        // Confirmar Item para agregar al ticket de la comanda
         $('#btn-confirmar-item').on('click', function() {
             const select = $('#select-producto');
             const dataP = select.find('option:selected').data();
-            if(!dataP) return;
+            if(!dataP || !dataP.nombre) return;
+
             let precioU = parseFloat(dataP.precio);
             let nota = [];
             $('.check-ingrediente:not(:checked)').each(function() { nota.push("SIN " + $(this).val()); });
-            $('.check-extra:checked').each(function() { 
-                nota.push("CON " + $(this).val()); 
+            $('.check-extra:checked').each(function() {
+                nota.push("CON " + $(this).val());
                 precioU += parseFloat($(this).data('precio'));
             });
-            if($('#input-comentario').val()) nota.push($('#input-comentario').val());
-            productosTemporal.push({ 
-                id: select.val(), nombre: dataP.nombre, 
-                cantidad: $('#input-cantidad').val(), comentario: nota.join(' | '), precio: precioU 
+            if($('#input-comentario').val().trim()) nota.push($('#input-comentario').val().trim());
+
+            productosTemporal.push({
+                id: select.val(),
+                nombre: dataP.nombre,
+                cantidad: $('#input-cantidad').val(),
+                comentario: nota.join(' | '),
+                precio: precioU
             });
+
             actualizarTicket();
+
+            // Reset campos
             select.val(null).trigger('change');
             $('#input-comentario').val('');
             $('#input-cantidad').val(1);
             $('#contenedor-ingredientes').hide();
+            $('#seccion-detalles-producto').hide();
         });
 
         // Enviar a Cocina
@@ -358,7 +380,7 @@
             $('#cobro_total_display').text(parseFloat(datosMesaActual.total).toLocaleString('es-MX', {minimumFractionDigits: 2}));
             $('#pago_con').val(datosMesaActual.total);
             $('#div_cambio').hide();
-            setTimeout(() => { $('#modalCobro').modal('show'); }, 450);
+            setTimeout(() => { $('#modalCobro').modal('show'); }, 400);
         });
 
         // Lógica de Cambio
@@ -375,7 +397,10 @@
         $('#metodo_pago').on('change', function() {
             if($(this).val() !== 'Efectivo') {
                 $('#pago_con').val($('#cobro_total_input').val()).attr('readonly', true);
-            } else { $('#pago_con').attr('readonly', false); }
+                $('#div_cambio').hide();
+            } else {
+                $('#pago_con').attr('readonly', false);
+            }
         });
     });
 
@@ -393,28 +418,31 @@
                     </div>`);
             });
             $('#btn-enviar-cocina').prop('disabled', false).removeClass('disabled');
-        } else { cont.html('<div class="text-center text-muted mt-5 py-5">Orden vacía</div>'); }
+        } else {
+            cont.html('<div class="text-center text-muted mt-5 py-5">Orden vacía</div>');
+            $('#btn-enviar-cocina').prop('disabled', true).addClass('disabled');
+        }
     }
 
-    // FUNCIÓN CARGAR TICKET CON DATOS FISCALES RESTAURADOS
+    // CARGAR TICKET Y VISTA PREVIA
     function abrirVistaTicket(id, mesa, total) {
         datosMesaActual = { id, mesa, total };
 
         // Llamada a la API de configuración Fiscal
         $.get('/configuracion/fiscal-api', function(negocio) {
-            $('#tk-nombre-negocio').text(negocio.nombre_comercial || 'KAZOKU SUSHI');
-            $('#tk-razon-social').text(negocio.razon_social || '');
-            $('#tk-nit').text(negocio.nit_rut ? 'RFC: ' + negocio.nit_rut : '');
-            $('#tk-direccion').text(negocio.direccion || '');
-            $('#tk-telefono').text(negocio.telefono ? 'Tel: ' + negocio.telefono : '');
-            $('#tk-mensaje').text(negocio.mensaje_ticket || '¡GRACIAS POR SU VISITA!');
-        }).fail(function() {
-            console.warn("No se pudo cargar la configuración fiscal.");
+            if(negocio) {
+                $('#tk-nombre-negocio').text(negocio.nombre_comercial || 'KAZOKU SUSHI');
+                $('#tk-razon-social').text(negocio.razon_social || '');
+                $('#tk-nit').text(negocio.nit_rut ? 'RFC: ' + negocio.nit_rut : '');
+                $('#tk-direccion').text(negocio.direccion || '');
+                $('#tk-telefono').text(negocio.telefono ? 'Tel: ' + negocio.telefono : '');
+                $('#tk-mensaje').text(negocio.mensaje_ticket || '¡GRACIAS POR SU VISITA!');
+            }
         });
 
         $('#tk-mesa').text(mesa);
         $('#tk-total').text('$' + parseFloat(total).toLocaleString('es-MX', {minimumFractionDigits: 2}));
-        
+
         let itemsHtml = '';
         $(`.btn-agregar[data-id="${id}"]`).closest('.card-mesa').find('.item-comanda').each(function() {
             let nom = $(this).data('nombre');
@@ -426,6 +454,7 @@
                 ${com ? `<div style="font-size: 10px; color: #555;"><i>${com}</i></div>` : ''}
             </div>`;
         });
+
         $('#tk-items-lista').html(itemsHtml || '<div class="text-center small py-2">Sin productos</div>');
         $('#modalTicket').modal('show');
     }
