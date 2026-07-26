@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Producto;
 use App\Models\Receta;
 use App\Models\Insumo;
-use App\Models\Producto;
 use App\Models\Categoria;
 use Illuminate\Http\Request;
 
@@ -13,7 +12,10 @@ class ProductoController extends Controller
 {
     public function index()
     {
+        // Carga la relación 'categoria' para optimizar consultas
         $productos = Producto::with('categoria')->paginate(10);
+        
+        // Obtiene todas las categorías para los selects de los modales
         $categorias = Categoria::orderBy('nombre', 'asc')->get();
 
         return view('productos.index', compact('productos', 'categorias'));

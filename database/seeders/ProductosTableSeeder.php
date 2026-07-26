@@ -14,6 +14,7 @@ class ProductosTableSeeder extends Seeder
             // Entradas
             ['categoria' => 'Entradas', 'nombre' => 'Chile Relleno', 'descripcion' => 'Mezcla de tampico con una proteina a elegir (res, pollo, camaron o tocino) envuelto con chile caribe.', 'precio' => 60.00],
             ['categoria' => 'Entradas', 'nombre' => 'Goyo Roll', 'descripcion' => 'Rollo de hoja de arroz empanizado y horneado. Por dentro: Philadelphia, aguacate, tampico, res y pollo. Afuera: bañado en anguila.', 'precio' => 70.00],
+            ['categoria' => 'Entradas', 'nombre' => 'Brocheta', 'descripcion' => 'Sushi en Forma de Brocheta con 2 Proteinas a eleigir: Res, Pollo, Camaron y Tocino.', 'precio' => 50.00],
 
             // Naturales
             ['categoria' => 'Naturales', 'nombre' => 'Avocado', 'descripcion' => 'Adentro: Philadelphia, aguacate y camaron. Afuera: Forrado de aguacate, bañado en anguila.', 'precio' => 140.00],

@@ -27,6 +27,7 @@
                                     <th class="px-4" style="width: 80px">ID</th>
                                     <th>Nombre</th>
                                     <th>Descripción</th>
+                                    <th class="text-center" style="width: 160px">Total Productos</th>
                                     <th class="text-center" style="width: 150px">Acciones</th>
                                 </tr>
                             </thead>
@@ -36,6 +37,11 @@
                                     <td class="px-4 align-middle"><b>#{{ $cat->id }}</b></td>
                                     <td class="align-middle text-dark font-weight-bold">{{ $cat->nombre }}</td>
                                     <td class="align-middle text-muted">{{ $cat->descripcion ?? 'Sin descripción' }}</td>
+                                    <td class="text-center align-middle">
+                                        <span class="badge badge-pill badge-primary px-3 py-2" style="font-size: 0.85rem;">
+                                            <i class="fas fa-box-open mr-1"></i> {{ $cat->productos_count ?? $cat->productos?->count() ?? 0 }}
+                                        </span>
+                                    </td>
                                     <td class="text-center align-middle">
                                         <form action="{{ route('categorias.destroy', $cat->id) }}" method="POST" class="form-eliminar d-inline">
                                             @csrf
@@ -48,7 +54,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-5 text-muted">
+                                    <td colspan="5" class="text-center py-5 text-muted">
                                         <i class="fas fa-folder-open fa-3x mb-3 text-light"></i><br>
                                         No hay categorías registradas actualmente.
                                     </td>

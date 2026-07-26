@@ -54,7 +54,8 @@
                                 </td>
                                 <td class="align-middle">
                                     <span class="badge badge-info">
-                                        {{ $producto->categoria->nombre ?? 'Sin Categoría' }}
+                                        {{-- Protección con operador null-safe ?-> --}}
+                                        {{ $producto->categoria?->nombre ?? 'Sin Categoría' }}
                                     </span>
                                 </td>
                                 <td class="align-middle text-muted small">
@@ -74,7 +75,7 @@
                                         <button class="btn btn-sm btn-info btn-edit"
                                                 data-id="{{ $producto->id }}"
                                                 data-nombre="{{ $producto->nombre }}"
-                                                data-categoria_id="{{ $producto->categoria_id }}"
+                                                data-categoria_id="{{ $producto->categoria_id ?? '' }}"
                                                 data-descripcion="{{ $producto->descripcion }}"
                                                 data-precio="{{ $producto->precio }}"
                                                 data-toggle="modal" data-target="#modalEditProducto"
