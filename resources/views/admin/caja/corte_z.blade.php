@@ -1,139 +1,153 @@
 @extends('layouts.admin')
 
-@section('title', 'Corte de Caja Z')
-
-@section('header', 'Cierre de Caja (Corte Z)')
+@section('title', 'Cierre de Caja (Corte Z)')
 
 @section('content')
 <div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h3 class="m-0 text-dark">Cierre General de Caja (Corte Z)</h3>
+            <span class="badge badge-dark px-3 py-2 font-weight-bold">CONSOLIDADOR DIARIO</span>
+        </div>
+    </div>
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    @endif
+
+    {{-- ALERTA DE CAJEROS PENDIENTES --}}
+    @if(!$puedoCerrarZ)
+        <div class="alert alert-warning border-left shadow-sm mb-4" style="border-left-width: 5px !important;">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x mr-3 text-warning"></i>
+                <div>
+                    <h5 class="font-weight-bold mb-1">Cierre Z Bloqueado</h5>
+                    <p class="mb-0 small">Hay <b>{{ $turnosAbiertos->count() }} cajero(s)</b> con turnos activos. Todos los cajeros deben ejecutar su <b>Corte X</b> antes de poder consolidar el día.</p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="row">
-        {{-- Resumen de Ventas --}}
+        {{-- RESUMEN ACUMULADO DEL DÍA --}}
         <div class="col-md-8">
-            <div class="card card-outline card-danger shadow">
-                <div class="card-header">
-                    <h3 class="card-title font-weight-bold text-danger">
-                        <i class="fas fa-cash-register mr-2"></i> Resumen de Ventas del Turno
-                    </h3>
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="m-0 font-weight-bold"><i class="fas fa-cash-register mr-2"></i> Resumen General de Ventas (Tiempo Real)</h5>
                 </div>
                 <div class="card-body">
-                    {{-- Alerta de Mesas Abiertas --}}
-                    @if($mesasAbiertas > 0)
-                        <div class="alert alert-warning border-0 shadow-sm">
-                            <h5><i class="icon fas fa-exclamation-triangle"></i> ¡Atención!</h5>
-                            Hay <strong>{{ $mesasAbiertas }}</strong> comanda(s) aún abiertas. Debes cerrarlas o cancelarlas antes de realizar el Corte Z.
-                        </div>
-                    @endif
-
-                    <div class="row">
-                        <div class="col-sm-4">
-                            <div class="info-box shadow-sm border">
-                                <span class="info-box-icon bg-success"><i class="fas fa-money-bill-wave"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text text-muted">Efectivo</span>
-                                    <span class="info-box-number text-success font-weight-bold">
-                                        ${{ number_format($resumen->efectivo, 2) }}
-                                    </span>
-                                </div>
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="p-3 bg-light rounded border">
+                                <small class="text-muted d-block text-uppercase font-weight-bold">Efectivo</small>
+                                <span class="h4 font-weight-bold text-success">${{ number_format($totalEfectivo, 2) }}</span>
                             </div>
                         </div>
-                        <div class="col-sm-4">
-                            <div class="info-box shadow-sm border">
-                                <span class="info-box-icon bg-info"><i class="fas fa-credit-card"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text text-muted">Tarjeta</span>
-                                    <span class="info-box-number text-info font-weight-bold">
-                                        ${{ number_format($resumen->tarjeta, 2) }}
-                                    </span>
-                                </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-light rounded border">
+                                <small class="text-muted d-block text-uppercase font-weight-bold">Tarjeta</small>
+                                <span class="h4 font-weight-bold text-primary">${{ number_format($totalTarjeta, 2) }}</span>
                             </div>
                         </div>
-                        <div class="col-sm-4">
-                            <div class="info-box shadow-sm border">
-                                <span class="info-box-icon bg-primary"><i class="fas fa-university"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text text-muted">Transferencia</span>
-                                    <span class="info-box-number text-primary font-weight-bold">
-                                        ${{ number_format($resumen->transferencia, 2) }}
-                                    </span>
-                                </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-light rounded border">
+                                <small class="text-muted d-block text-uppercase font-weight-bold">Transferencia</small>
+                                <span class="h4 font-weight-bold text-info">${{ number_format($totalTransferencia, 2) }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="table-responsive mt-4">
-                        <table class="table table-hover border">
-                            <thead class="bg-light">
+                    <div class="bg-dark text-white p-3 rounded text-center mb-3">
+                        <small class="text-white-50 text-uppercase font-weight-bold d-block">Total Recaudado Hoy</small>
+                        <h2 class="font-weight-bold m-0 text-warning">${{ number_format($totalGeneral, 2) }}</h2>
+                    </div>
+                </div>
+            </div>
+
+            {{-- TABLA ESTADO DE CAJEROS DEL DÍA --}}
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-dark"><i class="fas fa-users mr-1"></i> Estado de Turnos de Cajeros (Hoy)</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light small text-uppercase">
                                 <tr>
-                                    <th class="py-3">Concepto</th>
-                                    <th class="text-right py-3">Monto Total</th>
+                                    <th>Cajero</th>
+                                    <th>Apertura</th>
+                                    <th>Fondo</th>
+                                    <th>Diferencia</th>
+                                    <th>Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
+                                @forelse($turnosDelDia as $t)
                                 <tr>
+                                    <td class="font-weight-bold align-middle">{{ $t->cajero_nombre }}</td>
+                                    <td class="align-middle small">{{ \Carbon\Carbon::parse($t->fecha_apertura)->format('H:i A') }}</td>
+                                    <td class="align-middle">${{ number_format($t->monto_apertura, 2) }}</td>
                                     <td class="align-middle">
-                                        <i class="fas fa-receipt mr-2 text-muted"></i> 
-                                        Ventas Realizadas ({{ $resumen->conteo }} tickets)
+                                        @if($t->estado == 'cerrada')
+                                            <span class="font-weight-bold {{ $t->diferencia < 0 ? 'text-danger' : ($t->diferencia > 0 ? 'text-warning' : 'text-success') }}">
+                                                ${{ number_format($t->diferencia, 2) }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted">En proceso...</span>
+                                        @endif
                                     </td>
-                                    <td class="text-right align-middle">
-                                        <h4 class="mb-0 font-weight-bold">${{ number_format($resumen->gran_total, 2) }}</h4>
+                                    <td class="align-middle">
+                                        @if($t->estado == 'abierta')
+                                            <span class="badge badge-warning px-2">TURNO ACTIVO</span>
+                                        @else
+                                            <span class="badge badge-success px-2">CORTE X LISTO</span>
+                                        @endif
                                     </td>
                                 </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No hay turnos registrados el día de hoy.</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                 </div>
-
-                <div class="card-footer bg-white py-4">
-                    {{-- El action debe coincidir con el nombre de tu ruta en web.php --}}
-                    <form action="{{ route('corte.procesar') }}" method="POST" onsubmit="return confirm('¿Confirmas el cierre de caja? Esto liberará todas las mesas y guardará el reporte diario.')">
-                        @csrf
-                        <button type="submit" class="btn btn-danger btn-xl btn-block py-3 font-weight-bold shadow-sm">
-                            <i class="fas fa-lock mr-2"></i> EJECUTAR CORTE Z (CIERRE DIARIO)
-                        </button>
-                    </form>
-                    <p class="text-center text-muted small mt-3">
-                        <i class="fas fa-info-circle mr-1"></i> 
-                        Esta acción es irreversible y reseteará los totales del Dashboard.
-                    </p>
-                </div>
             </div>
+
+            {{-- BOTÓN DE CIERRE DEFINITIVO Z --}}
+            <form action="{{ route('caja.cerrar_z') }}" method="POST" onsubmit="return confirm('¿Confirmar el Cierre General Z del día?')">
+                @csrf
+                <button type="submit" class="btn btn-danger btn-block btn-lg font-weight-bold shadow py-3" {{ !$puedoCerrarZ ? 'disabled' : '' }}>
+                    <i class="fas fa-lock mr-2"></i> EJECUTAR CORTE Z (CIERRE DIARIO DEFINITIVO)
+                </button>
+                @if(!$puedoCerrarZ)
+                    <small class="text-danger d-block text-center mt-2 font-weight-bold">
+                        * Debe esperar a que todos los cajeros realicen su Corte X para habilitar este botón.
+                    </small>
+                @endif
+            </form>
         </div>
 
-        {{-- Panel Lateral Informativo --}}
+        {{-- PANEL INFORMATIVO --}}
         <div class="col-md-4">
-            <div class="card card-dark shadow">
-                <div class="card-header border-0">
-                    <h3 class="card-title"><i class="fas fa-info-circle mr-2"></i> Información del Cierre</h3>
+            <div class="card shadow-sm border-0 style="border-radius: 12px;">
+                <div class="card-header bg-secondary text-white py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-info-circle mr-1"></i> Información del Cierre</h6>
                 </div>
                 <div class="card-body">
-                    <ul class="list-group list-group-unbordered">
-                        <li class="list-group-item d-flex justify-content-between">
-                            <b>Fecha de Cierre</b> <span>{{ date('d/m/Y') }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <b>Hora actual</b> <span>{{ date('H:i A') }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between border-bottom-0">
-                            <b>Cajero responsable</b> <span class="badge badge-info">{{ Auth::user()->name }}</span>
-                        </li>
-                    </ul>
+                    <p class="small text-muted mb-2"><b>Fecha de Cierre:</b> {{ date('d/m/Y') }}</p>
+                    <p class="small text-muted mb-2"><b>Tickets Registrados Hoy:</b> {{ count($ventasHoy) }}</p>
+                    <hr>
+                    <small class="text-muted">
+                        <i class="fas fa-lightbulb text-warning mr-1"></i> El <b>Corte Z</b> resetea los indicadores del Dashboard diario y consolida la contabilidad final del negocio.
+                    </small>
                 </div>
-            </div>
-
-            <div class="alert alert-info shadow-sm">
-                <h5><i class="icon fas fa-lightbulb"></i> Tip de Caja</h5>
-                Asegúrate de contar físicamente el efectivo antes de realizar el corte para evitar descuadres en el reporte final.
             </div>
         </div>
     </div>
 </div>
 @endsection
-
-@push('css')
-<style>
-    .info-box-number { font-size: 1.6rem !important; }
-    .btn-xl { font-size: 1.25rem; border-radius: 12px; }
-    .card { border-radius: 15px; }
-    .info-box { border-radius: 10px; }
-</style>
-@endpush

@@ -10,7 +10,7 @@ use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\InsumoController;
 use App\Http\Controllers\RecetaController;
 use App\Http\Controllers\PreVentaController;
-use App\Http\Controllers\CorteZController;
+use App\Http\Controllers\CajaController;
 use App\Http\Controllers\Auth\LoginController;
 
 Route::get('/health', function () {
@@ -19,7 +19,7 @@ Route::get('/health', function () {
         $buildInfo = $db->command(['buildInfo' => 1])->toArray()[0];
         $serverStatus = $db->command(['serverStatus' => 1])->toArray()[0];
 
-        // Convertimos el tiempo UTC de Mongo al tiempo local de Culiacán
+        // Convertimos el tiempo UTC de Mongo al tiempo local
         $mongoTime = isset($serverStatus['localTime'])
             ? \Carbon\Carbon::parse($serverStatus['localTime']->toDateTime())->timezone(config('app.timezone'))->format('Y-m-d H:i:s T')
             : now()->format('Y-m-d H:i:s T');
@@ -53,10 +53,7 @@ Route::get('/health', function () {
 | Rutas Autenticación
 |--------------------------------------------------------------------------
 */
-// Esta es la ruta que Laravel busca por defecto cuando la sesión expira
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
-
-// Asignamos el nombre 'login.store' para procesar el formulario
 Route::post('/login', [LoginController::class, 'login'])->name('login.store');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
@@ -116,7 +113,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{id}', [RecetaController::class, 'destroy'])->name('recetas.destroy');
     });
 
-    // --- Rutas para PreVenta ---
+    // --- Rutas para PreVenta (Comandas) ---
     Route::prefix('preventa')->group(function () {
         Route::get('/', [PreVentaController::class, 'index'])->name('preventa.index');
         Route::get('/insumos/{id}', [PreVentaController::class, 'getInsumos']);
@@ -126,9 +123,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/finalizar', [PreVentaController::class, 'finalizarCobro'])->name('preventa.finalizar');
     });
 
-    // --- Rutas para Caja ---
+    // --- Rutas Unificadas para Gestión de Caja (Apertura, Corte X y Corte Z) ---
     Route::prefix('caja')->group(function () {
-        Route::get('/corte-z', [CorteZController::class, 'index'])->name('corte.index');
-        Route::post('/corte-z', [CorteZController::class, 'procesarCierre'])->name('corte.procesar');
+        Route::get('/corte-x', [CajaController::class, 'corteX'])->name('caja.corte_x');
+        Route::get('/corte-z', [CajaController::class, 'corteZ'])->name('caja.corte_z');
+        Route::post('/abrir', [CajaController::class, 'abrirTurno'])->name('caja.abrir');
+        Route::post('/cerrar-turno', [CajaController::class, 'cerrarTurno'])->name('caja.cerrar');
+        Route::post('/cerrar-z', [CajaController::class, 'cerrarDiaZ'])->name('caja.cerrar_z');
     });
+
 });

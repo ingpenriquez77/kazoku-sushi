@@ -165,27 +165,58 @@
                         </a>
                     </li>
 
+                    <li class="nav-header text-muted small">SISTEMA Y CAJA</li>
+
+                    {{-- BOTONES DE CAJA --}}
                     <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="nav-icon fas fa-receipt"></i>
-                            <p>Ventas</p>
+                        <a href="{{ route('caja.corte_x') }}" class="nav-link {{ request()->is('caja/corte-x*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-user-clock text-info"></i>
+                            <p>Corte Turno (X)</p>
                         </a>
                     </li>
 
-                    <li class="nav-header text-muted small">SISTEMA</li>
-
-                    {{-- NUEVO BOTÓN: CORTE DE CAJA (Z) --}}
                     <li class="nav-item">
-                        <a href="{{ route('corte.index') }}" class="nav-link {{ request()->is('caja/corte-z*') ? 'active' : '' }}">
+                        <a href="{{ route('caja.corte_z') }}" class="nav-link {{ request()->is('caja/corte-z*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-cash-register text-warning"></i>
-                            <p>Corte de Caja (Z)</p>
+                            <p>Corte Diario (Z)</p>
                         </a>
+                    </li>
+
+                    {{-- MÓDULO DE REPORTES (DESPLEGABLE TREEVIEW) --}}
+                    <li class="nav-item {{ request()->is('reportes*') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ request()->is('reportes*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-file-alt text-teal"></i>
+                            <p>
+                                Reportes
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ Route::has('reportes.ventas') ? route('reportes.ventas') : '#' }}" class="nav-link {{ request()->is('reportes/ventas*') ? 'active' : '' }}">
+                                    <i class="far fa-circle nav-icon text-success"></i>
+                                    <p>Ventas e Ingresos</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ Route::has('reportes.inventario') ? route('reportes.inventario') : '#' }}" class="nav-link {{ request()->is('reportes/inventario*') ? 'active' : '' }}">
+                                    <i class="far fa-circle nav-icon text-info"></i>
+                                    <p>Consumo de Insumos</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ Route::has('reportes.cortes') ? route('reportes.cortes') : '#' }}" class="nav-link {{ request()->is('reportes/cortes*') ? 'active' : '' }}">
+                                    <i class="far fa-circle nav-icon text-warning"></i>
+                                    <p>Historial Cortes X/Z</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
 
                     {{-- BOTÓN: DATOS FISCALES --}}
                     <li class="nav-item">
                         <a href="{{ route('datos_negocio.index') }}" class="nav-link {{ request()->is('configuracion/fiscal*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-file-invoice-dollar text-info"></i>
+                            <i class="nav-icon fas fa-file-invoice-dollar text-primary"></i>
                             <p>Datos Fiscales</p>
                         </a>
                     </li>
