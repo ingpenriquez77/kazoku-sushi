@@ -48,7 +48,7 @@ class LoginController extends Controller
         // 4. Si falla, regresar con error
         return back()->withErrors([
             'login' => 'Las credenciales no coinciden con nuestros registros.',
-        ])->withInput($request->only('login'));
+        ])->withInput($request->only('/'));
     }
 
     // Cerrar sesión
