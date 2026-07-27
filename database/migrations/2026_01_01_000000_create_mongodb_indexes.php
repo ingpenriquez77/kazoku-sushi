@@ -33,6 +33,7 @@ return new class extends Migration
             $collection->index('corte_id');
             $collection->index('user_id');
             $collection->index('created_at');
+            $collection->index('metodo_pago');
         });
 
         // 5. Detalle de Ventas
@@ -47,6 +48,14 @@ return new class extends Migration
             $collection->index('producto_id');
             $collection->index('insumo_id');
         });
+
+        // 7. Caja Turnos (Corte X / Cajeros)
+        Schema::connection('mongodb')->table('caja_turnos', function (Blueprint $collection) {
+            $collection->index('user_id');
+            $collection->index('estado');
+            $collection->index('fecha_apertura');
+            $collection->index('created_at');
+        });
     }
 
     public function down(): void
@@ -56,11 +65,15 @@ return new class extends Migration
         });
 
         Schema::connection('mongodb')->table('ventas', function (Blueprint $collection) {
-            $collection->dropIndex(['estado', 'corte_id', 'user_id', 'created_at']);
+            $collection->dropIndex(['estado', 'corte_id', 'user_id', 'created_at', 'metodo_pago']);
         });
 
         Schema::connection('mongodb')->table('detalle_ventas', function (Blueprint $collection) {
             $collection->dropIndex(['venta_id', 'producto_id', 'estado_item']);
+        });
+
+        Schema::connection('mongodb')->table('caja_turnos', function (Blueprint $collection) {
+            $collection->dropIndex(['user_id', 'estado', 'fecha_apertura', 'created_at']);
         });
     }
 };
