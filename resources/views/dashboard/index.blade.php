@@ -113,16 +113,24 @@
                             <tbody>
                                 @forelse($ultimos_pedidos as $pedido)
                                 <tr>
-                                    <td><span class="text-primary font-weight-bold">{{ $pedido->codigo_pedidido }}</span></td>
-                                    <td>{{ $pedido->mesa }}</td>
-                                    <td>{{ $pedido->mesero ?? 'N/A' }}</td>
                                     <td>
-                                        @if($pedido->estado == 'Pagado')
+                                        <span class="text-primary font-weight-bold">
+                                            {{ $pedido->codigo }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="font-weight-bold text-dark">
+                                            {{ $pedido->mesa }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $pedido->mesero }}</td>
+                                    <td>
+                                        @if(strtolower($pedido->estado) == 'pagado')
                                             <span class="badge badge-success px-2 py-1">Pagado</span>
-                                        @elseif($pedido->estado == 'pendiente')
+                                        @elseif(strtolower($pedido->estado) == 'pendiente')
                                             <span class="badge badge-warning px-2 py-1">En Curso</span>
                                         @else
-                                            <span class="badge badge-secondary px-2 py-1">{{ $pedido->estado }}</span>
+                                            <span class="badge badge-secondary px-2 py-1">{{ ucfirst($pedido->estado) }}</span>
                                         @endif
                                     </td>
                                     <td>

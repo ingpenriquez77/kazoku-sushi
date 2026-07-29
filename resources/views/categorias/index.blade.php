@@ -55,7 +55,7 @@
     @endif
 
     <div class="accordion" id="accordionCategorias">
-        @forelse($categorias as $index => $cat)
+        @forelse($categorias as $cat)
             <div class="card card-categoria shadow-sm mb-3">
                 <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center flex-grow-1 btn-toggle-accordion" data-toggle="collapse" data-target="#collapse-{{ $cat->id }}">
@@ -67,10 +67,23 @@
                     </div>
 
                     <div class="d-flex align-items-center">
-                        <span class="badge badge-pill badge-primary px-3 py-2 mr-3" style="font-size: 0.85rem;">
+                        {{-- Conteo dinámico de productos --}}
+                        <span class="badge badge-pill badge-primary px-3 py-2 mr-3" id="badge-count-{{ $cat->id }}" style="font-size: 0.85rem;">
                             <i class="fas fa-hamburger mr-1"></i> {{ $cat->productos->count() }} Productos
                         </span>
 
+                        {{-- BOTÓN EDITAR --}}
+                        <button type="button" 
+                                class="btn btn-outline-warning btn-sm mr-2 btn-editar-cat" 
+                                data-id="{{ $cat->id }}"
+                                data-nombre="{{ $cat->nombre }}"
+                                data-descripcion="{{ $cat->descripcion }}"
+                                title="Editar Categoría" 
+                                style="border-radius: 6px;">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        {{-- BOTÓN ELIMINAR --}}
                         <form action="{{ route('categorias.destroy', $cat->id) }}" method="POST" class="d-inline mr-2">
                             @csrf
                             @method('DELETE')
@@ -85,9 +98,9 @@
                     </div>
                 </div>
 
-                {{-- Se despliega el primer elemento por defecto ($index === 0) --}}
-                <div id="collapse-{{ $cat->id }}" class="collapse {{ $index === 0 ? 'show' : '' }}" data-parent="#accordionCategorias">
-                    <div class="card-body bg-light pt-3 pb-4 border-top">
+                {{-- NINGUNA CATEGORÍA ABIERTA POR DEFECTO --}}
+                <div id="collapse-{{ $cat->id }}" class="collapse" data-parent="#accordionCategorias">
+                    <div class="card-body bg-light pt-3 pb-4 border-top" id="container-productos-{{ $cat->id }}">
                         @if($cat->productos->count() > 0)
                             <div class="row">
                                 @foreach($cat->productos as $prod)
@@ -157,6 +170,38 @@
         </div>
     </div>
 </div>
+
+{{-- MODAL EDITAR CATEGORÍA --}}
+<div class="modal fade" id="modal-editar-categoria" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow border-0" style="border-radius: 15px;">
+            <div class="modal-header bg-warning text-dark" style="border-radius: 15px 15px 0 0;">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-edit mr-1"></i> Editar Categoría</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="form-editar-categoria" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="font-weight-bold text-dark">Nombre</label>
+                        <input type="text" id="edit-nombre" name="nombre" class="form-control" required style="border-radius: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold text-dark">Descripción (Opcional)</label>
+                        <textarea id="edit-descripcion" name="descripcion" class="form-control" rows="3" style="border-radius: 8px;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning font-weight-bold px-4" style="border-radius: 8px;">Actualizar Categoría</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('js')
@@ -173,8 +218,26 @@
             });
         @endif
 
+        // Abrir Modal Editar Categoría con JS Dinámico
+        $('.btn-editar-cat').on('click', function(e) {
+            e.stopPropagation();
+            let id = $(this).data('id');
+            let nombre = $(this).data('nombre');
+            let descripcion = $(this).data('descripcion');
+
+            // Construcción segura de la URL dinámica evitando excepciones de Blade
+            let url = "{{ url('categorias') }}/" + id;
+            $('#form-editar-categoria').attr('action', url);
+
+            $('#edit-nombre').val(nombre);
+            $('#edit-descripcion').val(descripcion);
+
+            $('#modal-editar-categoria').modal('show');
+        });
+
+        // Confirmación con SweetAlert2 para eliminar
         $('.btn-confirm-delete').on('click', function(e) {
-            e.stopPropagation(); // Evita que se colapse/despliegue el acordeón al hacer clic en eliminar
+            e.stopPropagation();
             let nombre = $(this).data('nombre');
             let form = $(this).closest('form');
             

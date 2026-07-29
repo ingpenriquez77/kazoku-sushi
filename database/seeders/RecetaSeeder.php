@@ -27,6 +27,16 @@ class RecetaSeeder extends Seeder
                 'Camaron' => 40,
                 'Pollo' => 40,
             ],
+            'Brocheta' => [
+                'Arroz' => 210,
+                'Philadelphia' => 20,
+                'Aguacate' => 15,
+                'Anguila' => 15,
+                'Carne de Res' => 35,
+                'Pollo' => 40,
+                'Panco' => 10,
+                'Aceite' => 10,
+            ],
 
             // --- ARROCES ---
             'Gohan Especial' => [

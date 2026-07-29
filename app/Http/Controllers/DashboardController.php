@@ -34,11 +34,20 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($venta) {
                 $venta->mesero = $venta->user->name ?? 'Sin asignar';
+                
+                // Mapeo seguro para Código de Pedido (Prioriza el folio 'PED-XXXXXXXX')
+                $venta->codigo = $venta->codigo_pedidido 
+                              ?? $venta->codigo_pedido 
+                              ?? $venta->codigo 
+                              ?? ('PED-' . strtoupper(substr((string)$venta->_id, -6)));
+
+                // Mapeo seguro para Mesa
+                $venta->mesa = $venta->mesa ?? $venta->nombre_mesa ?? 'Sin Mesa';
+
                 return $venta;
             });
 
         // 3. Productos más vendidos
-        // Agrupamos el historial de detalles pagados en memoria
         $detallesPagados = DetalleVenta::with('producto')
             ->where('estado_item', '!=', 'cancelado')
             ->get();

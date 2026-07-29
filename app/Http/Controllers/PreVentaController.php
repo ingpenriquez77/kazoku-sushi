@@ -6,6 +6,7 @@ use App\Models\Venta;
 use App\Models\DetalleVenta;
 use App\Models\Producto;
 use App\Models\Receta;
+use App\Models\CajaTurno;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,6 +14,10 @@ class PreVentaController extends Controller
 {
     public function index()
     {
+        // Validar si existe un turno de caja abierto
+        $cajaTurno = CajaTurno::where('estado', 'abierta')->first();
+        $cajaAbierta = $cajaTurno ? true : false;
+
         // 1. Ventas pendientes con la relación del usuario (mesero)
         $ventas_pendientes = Venta::with('user')
             ->where('estado', 'pendiente')
@@ -40,7 +45,7 @@ class PreVentaController extends Controller
 
         $productos = Producto::orderBy('nombre', 'asc')->get();
 
-        return view('preventa.index', compact('ventas_pendientes', 'productos', 'detalles_totales'));
+        return view('preventa.index', compact('ventas_pendientes', 'productos', 'detalles_totales', 'cajaAbierta'));
     }
 
     public function getInsumos($id)
@@ -67,6 +72,13 @@ class PreVentaController extends Controller
 
     public function store(Request $request)
     {
+        // Bloqueo en servidor si la caja no está abierta
+        $cajaAbierta = CajaTurno::where('estado', 'abierta')->exists();
+
+        if (!$cajaAbierta) {
+            return redirect()->route('preventa.index')->with('caja_cerrada', true);
+        }
+
         $request->validate(['mesa' => 'required|max:50']);
 
         $codigo = 'PED-' . strtoupper(substr(uniqid(), -8));
@@ -101,7 +113,7 @@ class PreVentaController extends Controller
 
                 DetalleVenta::create([
                     'venta_id'        => $venta->_id,
-                    'codigo_pedidido' => $venta->codigo_pedidido,
+                    'codigo_pedidido' => $venta->codigo_pedidido ?? $venta->codigo_pedido,
                     'producto_id'     => $producto_id,
                     'cantidad'        => $cantidades[$i],
                     'precio_unitario' => $precio_final,
@@ -124,6 +136,30 @@ class PreVentaController extends Controller
         }
     }
 
+    /**
+     * Cancela o remueve un producto específico de la comanda y recalcula el total.
+     */
+    public function cancelarDetalle($id)
+    {
+        try {
+            $detalle = DetalleVenta::findOrFail($id);
+            
+            // Marcar el producto como cancelado
+            $detalle->update(['estado_item' => 'cancelado']);
+
+            // Recalcular el total acumulado en la venta
+            $nuevo_total = DetalleVenta::where('venta_id', $detalle->venta_id)
+                ->where('estado_item', '!=', 'cancelado')
+                ->sum('subtotal');
+
+            Venta::where('_id', $detalle->venta_id)->update(['total' => $nuevo_total]);
+
+            return redirect()->back()->with('success', 'Producto eliminado de la comanda.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al eliminar el producto: ' . $e->getMessage());
+        }
+    }
+
     public function destroy($id)
     {
         try {
@@ -143,7 +179,7 @@ class PreVentaController extends Controller
             'metodo_pago'     => 'required',
             'pago_con'        => 'required|numeric',
             'total_pagar'     => 'required|numeric',
-            'referencia_pago' => 'nullable|string|max:100', // Validación opcional para vouchers/folios
+            'referencia_pago' => 'nullable|string|max:100',
         ]);
 
         try {

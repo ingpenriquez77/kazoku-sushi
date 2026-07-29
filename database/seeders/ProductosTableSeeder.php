@@ -40,6 +40,7 @@ class ProductosTableSeeder extends Seeder
             ['categoria' => 'Especialidades', 'nombre' => 'RockaRoll', 'descripcion' => 'Adentro: Philadelphia, aguacate, res y camaron. Afuera: Gratinado con tocino y camarones empanizados.', 'precio' => 180.00],
             ['categoria' => 'Especialidades', 'nombre' => 'Bombastic', 'descripcion' => 'Adentro: Revoltura de arroz con las 4 proteinas, forrada de arroz, por fuera gratinado spicy con trozos de pollo y tocino, aguacate y salsa de anguila.', 'precio' => 150.00],
             ['categoria' => 'Especialidades', 'nombre' => 'Kroll', 'descripcion' => 'Adentro: Philadelphia, aguacate, pollo y camaron. Afuera: Gratinado con trozos de tocino coronado con tampico spicy con trozos de camaron y bañado con anguila.', 'precio' => 230.00],
+            ['categoria' => 'Especialidades', 'nombre' => 'Poker de Ases', 'descripcion' => 'Cambiar la Descripcion.', 'precio' => 230.00],
 
             // Arroces
             ['categoria' => 'Arroces', 'nombre' => 'Gohan Especial', 'descripcion' => 'Tazon de arroz blanco, coronado con philadelphia, tampico, pollo y cebolla capeada y salsa de anguila.', 'precio' => 120.00],

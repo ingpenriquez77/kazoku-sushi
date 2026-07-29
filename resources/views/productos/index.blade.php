@@ -15,12 +15,21 @@
                 <i class="fas fa-plus"></i> Nuevo Producto
             </button>
 
-            <div class="input-group" style="width: 300px;">
-                <input type="text" id="buscador-productos" class="form-control" placeholder="Escribe para buscar..." autocomplete="off">
+            {{-- BUSCADOR CON FILTRADO INSTANTÁNEO EN TODAS LAS PÁGINAS --}}
+            <div class="input-group mb-2" style="width: 350px;">
+                <input type="text" 
+                       id="buscador-ajax" 
+                       value="{{ request('buscar') }}" 
+                       class="form-control" 
+                       placeholder="Escribe para buscar..." 
+                       autocomplete="off">
                 <div class="input-group-append">
                     <span class="input-group-text bg-dark text-white border-dark">
-                        <i class="fas fa-search"></i>
+                        <i class="fas fa-search" id="icono-buscar"></i>
                     </span>
+                    <button type="button" class="btn btn-outline-secondary {{ request('buscar') ? '' : 'd-none' }}" id="btn-limpiar" title="Limpiar filtro">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -54,7 +63,6 @@
                                 </td>
                                 <td class="align-middle">
                                     <span class="badge badge-info">
-                                        {{-- Protección con operador null-safe ?-> --}}
                                         {{ $producto->categoria?->nombre ?? 'Sin Categoría' }}
                                     </span>
                                 </td>
@@ -66,12 +74,10 @@
                                 </td>
                                 <td class="text-center align-middle">
                                     <div class="btn-group shadow-sm">
-                                        {{-- BOTÓN RECETA --}}
                                         <a href="{{ route('recetas.index', $producto->id) }}" class="btn btn-sm btn-warning" title="Gestionar Receta">
                                             <i class="fas fa-utensils"></i>
                                         </a>
 
-                                        {{-- BOTÓN EDITAR --}}
                                         <button class="btn btn-sm btn-info btn-edit"
                                                 data-id="{{ $producto->id }}"
                                                 data-nombre="{{ $producto->nombre }}"
@@ -83,7 +89,6 @@
                                             <i class="fas fa-edit"></i>
                                         </button>
 
-                                        {{-- BOTÓN ELIMINAR --}}
                                         <form action="{{ route('productos.destroy', $producto->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este producto?')">
                                             @csrf
                                             @method('DELETE')
@@ -97,7 +102,7 @@
                             @empty
                             <tr>
                                 <td colspan="5" class="text-center py-5 text-muted">
-                                    <i class="fas fa-info-circle mr-1"></i> No hay productos registrados.
+                                    <i class="fas fa-info-circle mr-1"></i> No se encontraron productos coincidentes.
                                 </td>
                             </tr>
                             @endforelse
@@ -107,8 +112,8 @@
             </div>
 
             <div class="card-footer bg-white border-top">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="text-muted small">
+                <div id="contenedor-paginacion" class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div class="text-muted small mb-2 mb-md-0">
                         Mostrando registros del <b>{{ $productos->firstItem() ?? 0 }}</b> al <b>{{ $productos->lastItem() ?? 0 }}</b>
                         de un total de <b>{{ $productos->total() }}</b>
                     </div>
@@ -212,17 +217,65 @@
 @push('js')
 <script>
 $(document).ready(function() {
-    // 1. Buscador instantáneo
-    $("#buscador-productos").on("input", function() {
-        let valor = $(this).val().toLowerCase().trim();
-        $(".fila-producto").each(function() {
-            let nombre = $(this).find(".nombre-prod").text().toLowerCase();
-            $(this).toggle(nombre.includes(valor));
+    let timerBusqueda;
+
+    function realizarBusqueda(termino, url = "{{ route('productos.index') }}") {
+        $('#icono-buscar').removeClass('fa-search').addClass('fa-spinner fa-spin');
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: { buscar: termino },
+            success: function(html) {
+                // Extrae y reemplaza únicamente el cuerpo de la tabla y la paginación de la respuesta HTML
+                let nuevaTabla = $(html).find('#tabla-productos-body').html();
+                let nuevaPaginacion = $(html).find('#contenedor-paginacion').html();
+
+                $('#tabla-productos-body').html(nuevaTabla);
+                $('#contenedor-paginacion').html(nuevaPaginacion);
+            },
+            error: function(err) {
+                console.error("Error al buscar productos:", err);
+            },
+            complete: function() {
+                $('#icono-buscar').removeClass('fa-spinner fa-spin').addClass('fa-search');
+            }
         });
+    }
+
+    // Evento de escritura instantánea en el input
+    $('#buscador-ajax').on('keyup input', function() {
+        let valor = $(this).val();
+
+        if (valor.length > 0) {
+            $('#btn-limpiar').removeClass('d-none');
+        } else {
+            $('#btn-limpiar').addClass('d-none');
+        }
+
+        clearTimeout(timerBusqueda);
+        timerBusqueda = setTimeout(function() {
+            realizarBusqueda(valor);
+        }, 100);
     });
 
-    // 2. Llenar modal de edición dinámicamente con categoría
-    $('.btn-edit').on('click', function() {
+    // Limpiar input de búsqueda
+    $('#btn-limpiar').on('click', function() {
+        $('#buscador-ajax').val('');
+        $(this).addClass('d-none');
+        realizarBusqueda('');
+    });
+
+    // Paginación sin recargar la página
+    $(document).on('click', '#contenedor-paginacion .pagination a', function(e) {
+        e.preventDefault();
+        let pageUrl = $(this).attr('href');
+        let valor = $('#buscador-ajax').val();
+        realizarBusqueda(valor, pageUrl);
+    });
+
+    // Modal de edición dinámico
+    $(document).on('click', '.btn-edit', function() {
         const id = $(this).data('id');
         const nombre = $(this).data('nombre');
         const categoria_id = $(this).data('categoria_id');

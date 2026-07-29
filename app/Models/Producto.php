@@ -16,10 +16,11 @@ class Producto extends Model
         'categoria_id',
         'imagen',
         'disponible',
+        'stock_actual',
     ];
 
     public function categoria()
     {
-        return $this->belongsTo(Categoria::class);
+        return $this->belongsTo(Categoria::class, 'categoria_id', '_id');
     }
 }

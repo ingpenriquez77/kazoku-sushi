@@ -27,7 +27,7 @@
         <div>
             <img src="{{ asset('img/kazoku.png') }}" alt="Logo">
         </div>
-        <a href="/"><b>Kazuko </b>Sushi</a>
+        <a href="/"><b>Kazoku </b>Sushi</a>
     </div>
     
     <div class="card shadow-lg" style="border-radius: 15px;">

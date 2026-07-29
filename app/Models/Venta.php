@@ -11,14 +11,17 @@ class Venta extends Model
 
     protected $fillable = [
         'user_id',
+        'codigo_pedidido', 
+        'mesa',            
         'cliente',
         'total',
-        'estado',         // ej: 'completada', 'cancelada'
-        'metodo_pago',    // ej: 'efectivo', 'tarjeta', 'transferencia'
-        'referencia_pago',// N° de Voucher (tarjeta) o N° de Folio/Rastreo (transferencia)
-        'monto_recibido', // Util si pagan en efectivo y necesitas calcular el cambio
-        'cambio',         // Cambio devuelto
-        'notas',          // Notas adicionales opcionales
+        'estado',          
+        'metodo_pago',     
+        'referencia_pago', 
+        'monto_recibido', 
+        'monto_pagado',  
+        'cambio',         
+        'notas',          
     ];
 
     public function user()

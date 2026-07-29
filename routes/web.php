@@ -120,6 +120,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/abrir', [PreVentaController::class, 'store'])->name('preventa.store');
         Route::post('/agregar', [PreVentaController::class, 'agregarProducto'])->name('preventa.agregar');
         Route::delete('/{id}', [PreVentaController::class, 'destroy'])->name('preventa.destroy');
+        Route::delete('/detalle/{id}', [PreVentaController::class, 'cancelarDetalle'])->name('preventa.cancelar_detalle'); // <-- RUTA NUEVA
         Route::post('/finalizar', [PreVentaController::class, 'finalizarCobro'])->name('preventa.finalizar');
     });
 

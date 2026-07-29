@@ -23,9 +23,15 @@
         font-size: 0.85rem; max-height: 200px; overflow-y: auto;
         background: #f4f6f9; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px;
     }
-    .item-comanda { border-bottom: 1px dashed #dee2e6; padding: 5px 0; }
+    .item-comanda { border-bottom: 1px dashed #dee2e6; padding: 5px 0; position: relative; }
     .item-comentario { font-size: 0.75rem; color: #6c757d; font-style: italic; display: block; line-height: 1.2; margin-top: 2px; }
     .item-precio-unit { font-size: 0.75rem; font-weight: bold; color: #28a745; }
+    
+    .btn-quitar-item {
+        color: #dc3545; cursor: pointer; padding: 2px 5px; border-radius: 4px;
+        transition: background 0.2s;
+    }
+    .btn-quitar-item:hover { background: #ffe6e6; }
 
     .ticket-visual {
         background: #fff; border: 1px solid #ddd; padding: 15px;
@@ -53,18 +59,25 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i> {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    @endif
+
     <div class="row">
         @forelse($ventas_pendientes as $venta)
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                 <div class="card card-mesa h-100 shadow-sm">
-                    <button class="btn-cancelar-comanda" onclick="confirmarCancelarComanda('{{ $venta->id }}', '{{ $venta->mesa }}')" title="Anular Comanda">
+                    <button class="btn-cancelar-comanda" onclick="confirmarCancelarComanda('{{ $venta->id }}', '{{ $venta->mesa }}')" title="Anular Comanda Completa">
                         <i class="fas fa-times"></i>
                     </button>
                     <div class="card-body p-3 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h5 class="font-weight-bold m-0 text-dark">{{ $venta->mesa }}</h5>
                             <small class="text-muted font-weight-bold text-uppercase">
-                                <i class="fas fa-user-tag mr-1"></i> {{ $venta->mesero ?? 'Caja' }}
+                                <i class="fas fa-user-tag mr-1"></i> {{ $venta->mesero }}
                             </small>
                         </div>
                         <h4 class="text-success font-weight-bold mb-3">${{ number_format($venta->total, 2) }}</h4>
@@ -80,12 +93,15 @@
                                          data-precio="{{ $det->precio }}"
                                          data-comentario="{{ $det->comentario }}">
 
-                                        <div class="d-flex justify-content-between">
-                                            <span><span class="font-weight-bold text-primary">{{ $det->cantidad }}x</span> {{ $det->nombre }}</span>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <i class="fas fa-minus-circle btn-quitar-item mr-1" onclick="confirmarCancelarDetalle('{{ $det->id }}', '{{ $det->nombre }}')" title="Cancelar este producto"></i>
+                                                <span class="font-weight-bold text-primary">{{ $det->cantidad }}x</span> {{ $det->nombre }}
+                                            </span>
                                             <span class="item-precio-unit">${{ number_format($det->precio * $det->cantidad, 2) }}</span>
                                         </div>
                                         @if($det->comentario)
-                                            <span class="item-comentario"><i class="fas fa-sticky-note mr-1"></i> {{ $det->comentario }}</span>
+                                            <span class="item-comentario pl-3"><i class="fas fa-sticky-note mr-1"></i> {{ $det->comentario }}</span>
                                         @endif
                                     </div>
                                 @endif
@@ -254,7 +270,6 @@
                         </select>
                     </div>
 
-                    {{-- CAMPO DINÁMICO PARA VOUCHER / FOLIO --}}
                     <div class="form-group text-left" id="div_referencia" style="display: none;">
                         <label id="lbl_referencia">Código de Autorización / Folio</label>
                         <input type="text" name="referencia_pago" id="referencia_pago" class="form-control form-control-lg" placeholder="Ej: 849204">
@@ -278,18 +293,59 @@
 </div>
 
 <form id="form-cancelar-comanda" method="POST" style="display:none;">@csrf @method('DELETE')</form>
+<form id="form-cancelar-detalle" method="POST" style="display:none;">@csrf @method('DELETE')</form>
 @endsection
 
 @push('js')
+<!-- SweetAlert2 Plugin -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     let productosTemporal = [];
     let datosMesaActual = {};
 
+    const cajaAbiertaStatus = @json($cajaAbierta ?? false);
+
     $(document).ready(function() {
-        // Inicializar Select2 en el modal
+        $('#modalNuevaMesa form').on('submit', function(e) {
+            if (!cajaAbiertaStatus) {
+                e.preventDefault();
+                $('#modalNuevaMesa').modal('hide');
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: '¡Caja Cerrada!',
+                    text: 'Debes realizar la apertura de turno en Caja antes de poder abrir comandas o mesas.',
+                    confirmButtonText: '<i class="fas fa-cash-register mr-1"></i> IR A ABRIR CAJA',
+                    confirmButtonColor: '#28a745',
+                    showCancelButton: true,
+                    cancelButtonText: 'Cancelar',
+                    allowOutsideClick: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "{{ route('caja.corte_x') }}";
+                    }
+                });
+            }
+        });
+
+        @if(session('caja_cerrada'))
+            Swal.fire({
+                icon: 'warning',
+                title: 'Aviso de Caja',
+                text: 'No hay ninguna caja abierta en este momento.',
+                confirmButtonText: '<i class="fas fa-cash-register mr-1"></i> IR A ABRIR CAJA',
+                confirmButtonColor: '#28a745',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{{ route('caja.corte_x') }}";
+                }
+            });
+        @endif
+
         $('.select2').select2({ placeholder: "Buscar producto...", theme: 'bootstrap4' });
 
-        // Evento Botón Comandar
         $(document).on('click', '.btn-agregar', function() {
             let id = $(this).data('id');
             let mesa = $(this).data('mesa');
@@ -298,7 +354,6 @@
             $('#labelMesa').text("Comandar: " + mesa);
             $('#ticket-mesa-nombre').text(mesa);
 
-            // Limpiar formulario interno del modal
             productosTemporal = [];
             actualizarTicket();
             $('#select-producto').val(null).trigger('change');
@@ -308,7 +363,6 @@
             $('#modalAgregarProducto').modal('show');
         });
 
-        // Cargar Insumos al seleccionar Producto
         $('#select-producto').on('change', function() {
             let pid = $(this).val();
             if(pid) {
@@ -335,7 +389,6 @@
             }
         });
 
-        // Confirmar Item para agregar al ticket de la comanda
         $('#btn-confirmar-item').on('click', function() {
             const select = $('#select-producto');
             const dataP = select.find('option:selected').data();
@@ -360,7 +413,6 @@
 
             actualizarTicket();
 
-            // Reset campos
             select.val(null).trigger('change');
             $('#input-comentario').val('');
             $('#input-cantidad').val(1);
@@ -368,7 +420,6 @@
             $('#seccion-detalles-producto').hide();
         });
 
-        // Enviar a Cocina
         $('#btn-enviar-cocina').on('click', function() {
             let html = '';
             productosTemporal.forEach(i => {
@@ -381,7 +432,6 @@
             $('#form-comanda').submit();
         });
 
-        // Botón Proceder al Cobro
         $('#btn-ir-a-cobro').on('click', function() {
             $('#modalTicket').modal('hide');
             $('#cobro_venta_id').val(datosMesaActual.id);
@@ -389,11 +439,10 @@
             $('#cobro_total_display').text(parseFloat(datosMesaActual.total).toLocaleString('es-MX', {minimumFractionDigits: 2}));
             $('#pago_con').val(datosMesaActual.total);
             $('#div_cambio').hide();
-            $('#metodo_pago').val('Efectivo').trigger('change'); // Reset a efectivo por defecto
+            $('#metodo_pago').val('Efectivo').trigger('change');
             setTimeout(() => { $('#modalCobro').modal('show'); }, 400);
         });
 
-        // Lógica de Cambio
         $('#pago_con').on('input', function() {
             let total = parseFloat($('#cobro_total_input').val());
             let pago = parseFloat($(this).val()) || 0;
@@ -404,7 +453,6 @@
             } else { $('#div_cambio').hide(); }
         });
 
-        // LÓGICA DE VISIBILIDAD DE MÉTODOS DE PAGO Y REFERENCIAS
         $('#metodo_pago').on('change', function() {
             let metodo = $(this).val();
 
@@ -448,11 +496,9 @@
         }
     }
 
-    // CARGAR TICKET Y VISTA PREVIA
     function abrirVistaTicket(id, mesa, total) {
         datosMesaActual = { id, mesa, total };
 
-        // Llamada a la API de configuración Fiscal
         $.get('/configuracion/fiscal-api', function(negocio) {
             if(negocio) {
                 $('#tk-nombre-negocio').text(negocio.nombre_comercial || 'KAZOKU SUSHI');
@@ -484,11 +530,42 @@
     }
 
     function confirmarCancelarComanda(id, mesa) {
-        if(confirm(`¿Desea anular por completo la ${mesa}?`)) {
-            let f = document.getElementById('form-cancelar-comanda');
-            f.action = '/preventa/' + id;
-            f.submit();
-        }
+        Swal.fire({
+            title: `¿Anular la ${mesa}?`,
+            text: "Esta acción cancelará la comanda completa.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, anular comanda',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let f = document.getElementById('form-cancelar-comanda');
+                f.action = '/preventa/' + id;
+                f.submit();
+            }
+        });
+    }
+
+    // NUEVA FUNCIÓN: Cancelar un solo ítem de la comanda
+    function confirmarCancelarDetalle(detalleId, productoNombre) {
+        Swal.fire({
+            title: `¿Quitar "${productoNombre}"?`,
+            text: "El producto se eliminará de la comanda y el total se actualizará.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, quitar producto',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let f = document.getElementById('form-cancelar-detalle');
+                f.action = '/preventa/detalle/' + detalleId;
+                f.submit();
+            }
+        });
     }
 </script>
 @endpush
